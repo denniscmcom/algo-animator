@@ -1,4 +1,8 @@
 #include "utils.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+#include <time.h>
 
 
 #define HEIGHT 1080
@@ -30,14 +34,21 @@ void display() {
 	float x = 1;
 	float rect_width = 5.0;
 	float space = 5.0;
+	
+	// Compute max number of rectangles to fit the windows
 	int max_rects = floor((WIDTH - rect_width) / (rect_width + space)) + x;	
 	
+	// Initialize empty array with same of `max_rects`
+	int *unsorted_array = (int*)malloc(max_rects * sizeof(int));
+
 	int rect_counter = 0;
 	while (rect_counter < max_rects) {
-		glVertex2f(x, 100.0);
-		glVertex2f(x + rect_width, 100.0);
-		glVertex2f(x + rect_width, HEIGHT - 300);
-		glVertex2d(x, HEIGHT - 300);
+		int height = random_int(100, HEIGHT - 100);
+
+		glVertex2f(x, HEIGHT - 100);
+		glVertex2f(x + rect_width, HEIGHT - 100);
+		glVertex2f(x + rect_width, height);
+		glVertex2d(x, height);
 
 		x += rect_width + space;
 		rect_counter++;
@@ -47,7 +58,7 @@ void display() {
 	
 	char text[256];
 	sprintf(text, "Number of elements: %i", rect_counter);
-    render_text(text, 20.0, HEIGHT - 200);	
+    render_text(text, 20.0, HEIGHT - 50);	
 	glFlush();
 }
 
