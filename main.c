@@ -5,8 +5,8 @@
 #include <time.h>
 
 
-#define HEIGHT 1080
-#define WIDTH 1920
+#define WINDOW_HEIGHT 1080
+#define WINDOW_WIDTH 1920
 
 
 void setup() {
@@ -23,42 +23,56 @@ void setup() {
 	glLoadIdentity();
 
 	// Set the coordinates to be used with the viewport
-	gluOrtho2D(0, WIDTH, HEIGHT, 0);
+	gluOrtho2D(0, WINDOW_WIDTH, WINDOW_HEIGHT, 0);
 }
+
+
+struct Rectangle {
+	int width;
+	int height;
+	int x_position;
+};
 
 
 void display() {
 	glClear(GL_COLOR_BUFFER_BIT);
 	glBegin(GL_QUADS);
 
-	float x = 1;
+	float x_position = 1;
 	float rect_width = 5.0;
 	float space = 5.0;
-	
+
 	// Compute max number of rectangles to fit the windows
-	int max_rects = floor((WIDTH - rect_width) / (rect_width + space)) + x;	
-	
-	// Initialize empty array with same of `max_rects`
-	int *unsorted_array = (int*)malloc(max_rects * sizeof(int));
+	int max_rects = floor((WINDOW_WIDTH - rect_width) / (rect_width + space)) + x_position;	
 
+	struct Rectangle *rectangles = malloc(max_rects * sizeof(struct Rectangle));
 	int rect_counter = 0;
+
 	while (rect_counter < max_rects) {
-		int height = random_int(100, HEIGHT - 100);
+		struct Rectangle rectangle;
+		rectangle.width = rect_width;
+		rectangle.height = random_int(100, WINDOW_HEIGHT - 100);
+		rectangle.x_position = x_position;
+		rectangles[rect_counter] = rectangle;
 
-		glVertex2f(x, HEIGHT - 100);
-		glVertex2f(x + rect_width, HEIGHT - 100);
-		glVertex2f(x + rect_width, height);
-		glVertex2d(x, height);
+		draw_rectangle(
+				rectangle.x_position, 
+				rectangle.height, 
+				rectangle.width, 
+				WINDOW_HEIGHT
+		);
 
-		x += rect_width + space;
+		x_position += rect_width + space;
 		rect_counter++;
 	}
 
 	glEnd();
-	
+
 	char text[256];
 	sprintf(text, "Number of elements: %i", rect_counter);
-    render_text(text, 20.0, HEIGHT - 50);	
+	render_text(text, 20.0, WINDOW_HEIGHT - 50);	
+
+	free(rectangles);
 	glFlush();
 }
 
@@ -66,7 +80,7 @@ void display() {
 int main(int argc, char** argv) {
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB);
-	glutInitWindowSize(WIDTH, HEIGHT);
+	glutInitWindowSize(WINDOW_WIDTH, WINDOW_HEIGHT);
 	glutCreateWindow("OpenGL Window");
 	setup();
 	glutDisplayFunc(display);
