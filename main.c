@@ -7,6 +7,7 @@
 
 #define WINDOW_HEIGHT 1080
 #define WINDOW_WIDTH 1920
+#define FPS 60
 #define OFFSET 150
 #define RECT_WIDTH 5
 #define SPACE 1
@@ -22,18 +23,22 @@ int arr_size;
 
 
 // Algos
+int step = 0;
+int i = 0;
 void bubble_sort() {
-	for (int step = 0; step < arr_size - 1; step++) {
+	if (i < arr_size - step - 1) {
+		int current = arr[i];
+		int next = arr[i + 1];
 
-		for (int i = 0; i < arr_size - step - 1; i++) {
-			int current = arr[i];
-			int next = arr[i + 1];
-
-			if (current > next) {
-				arr[i + 1] = current;
-				arr[i] = next;
-			}
+		if (current > next) {
+			arr[i + 1] = current;
+			arr[i] = next;
 		}
+
+		i++;
+	} else {
+		step++;
+		i = 0;
 	}
 }
 
@@ -141,12 +146,13 @@ void display() {
 	render_text(WINDOW_WIDTH - 500, OFFSET - 100, "Press 'r' to reset array");
 
 	glutSwapBuffers();
-	glFlush();
 }
 
 
-void idle() {
+void timer(int value) {
+	bubble_sort();
 	glutPostRedisplay();
+	glutTimerFunc(1000 / 800, timer, 0);
 }
 
 
@@ -191,7 +197,7 @@ int main(int argc, char** argv) {
 	setup();
 	glutDisplayFunc(display);
 	glutKeyboardFunc(keyboard);
-	glutIdleFunc(idle);
+	glutTimerFunc(0, timer, 0);
 	glutMainLoop();
 
 	free(arr);
