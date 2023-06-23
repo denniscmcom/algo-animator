@@ -1,7 +1,6 @@
 #include "utils.h"
-#include <GL/glut.h>
 #include <stdio.h>
-#include <stdlib.h>
+#include <GL/glut.h>
 
 
 #define WINDOW_HEIGHT 1080
@@ -19,6 +18,7 @@ struct Rectangle {
 // Globals
 struct Rectangle* rectangles;
 int n_rectangles;
+int test_counter = 0;
 
 
 void setup() {
@@ -36,6 +36,16 @@ void setup() {
 
 	// Set the coordinates to be used with the viewport
 	gluOrtho2D(0, WINDOW_WIDTH, WINDOW_HEIGHT, 0);
+
+}
+
+
+void render_text(int x, int y, char* text) {
+	glRasterPos2f(x, y);
+
+	for (const char *c = text; *c; ++c) {
+		glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, *c);
+	}
 }
 
 
@@ -55,13 +65,27 @@ void display() {
 	// Render text
 	char text[256];
 	sprintf(text, "Number of elements: %i", n_rectangles);
-	glRasterPos2f(20.0, WINDOW_HEIGHT - 50);
+	render_text(40.0, WINDOW_HEIGHT - 50, text);
 
-	for (const char *c = text; *c; ++c) {
-		glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, *c);
-	}
+	sprintf(text, "Test counter: %i", test_counter);
+	render_text(540.0, WINDOW_HEIGHT - 50, text);
 
+	glutSwapBuffers();
 	glFlush();
+}
+
+
+void idle() {
+	glutPostRedisplay();
+}
+
+
+void keyboard(unsigned char key, int x, int y) {
+
+	// 13 is the ASCII value of ENTER key
+	if (key == 13) {
+		test_counter++;
+	}
 }
 
 
@@ -82,11 +106,13 @@ int main(int argc, char** argv) {
 	}
 
 	glutInit(&argc, argv);
-	glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB);
+	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
 	glutInitWindowSize(WINDOW_WIDTH, WINDOW_HEIGHT);
 	glutCreateWindow("OpenGL Window");
 	setup();
 	glutDisplayFunc(display);
+	glutKeyboardFunc(keyboard);
+	glutIdleFunc(idle);
 	glutMainLoop();
 
 	free(rectangles);
