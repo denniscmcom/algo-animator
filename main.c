@@ -1,6 +1,7 @@
-#include "utils.h"
 #include <stdio.h>
+#include <stdlib.h>
 #include <GL/glut.h>
+#include <math.h>
 
 
 #define WINDOW_HEIGHT 1080
@@ -9,18 +10,58 @@
 #define SPACE 5
 
 
+// Globals
+char* algos[] = {"Bubble sort", "Selection sort", "Insertion sort", "Quick sort"};
+
+int selected_algo = 0;
+int n_algos = sizeof(algos) / sizeof(algos[0]);
+int n_rectangles;
+
 struct Rectangle {
 	int width;
 	int height;
 	int x;
 };
 
-// Globals
 struct Rectangle* rectangles;
-int n_rectangles;
-int test_counter = 0;
 
 
+// Algos
+void bubble_sort() {
+	for (int i = 0; i < n_rectangles; i++) {
+		
+		struct Rectangle current = rectangles[i];
+		struct Rectangle next = rectangles[i + 1];
+
+		printf("Current pos: %i\n", current.x);
+		printf("Next pos: %i\n", next.x);
+
+		// Place largest element at the end of the array
+		if (current.height > next.height) {
+			rectangles[i + 1].x = current.x;
+			rectangles[i].x = next.x;
+		}
+	}
+}
+
+
+// Utils
+int random_int(int min, int max) {
+	return rand() % ((max - min) + 1) + min;
+}
+
+
+void algo_selector(int direction) {
+	int selection = selected_algo + direction;
+	int lower = 0;
+	int upper = (sizeof(algos) / sizeof(algos[0])) - 1;
+
+	if (selection >= lower && selection <= upper) {
+		selected_algo = selection;
+	}
+}
+
+// GL and GLUT
 void setup() {
 
 	// Set background dark
@@ -54,8 +95,8 @@ void display() {
 	glBegin(GL_QUADS);
 
 	for (int i = 0; i < n_rectangles; i++) {
-		glVertex2f(rectangles[i].x, WINDOW_HEIGHT - 100);
-		glVertex2f(rectangles[i].x + rectangles[i].width, WINDOW_HEIGHT - 100);
+		glVertex2f(rectangles[i].x, WINDOW_HEIGHT - 200);
+		glVertex2f(rectangles[i].x + rectangles[i].width, WINDOW_HEIGHT - 200);
 		glVertex2f(rectangles[i].x + rectangles[i].width, rectangles[i].height);
 		glVertex2d(rectangles[i].x, rectangles[i].height);
 	}
@@ -64,11 +105,15 @@ void display() {
 
 	// Render text
 	char text[256];
-	sprintf(text, "Number of elements: %i", n_rectangles);
-	render_text(40.0, WINDOW_HEIGHT - 50, text);
 
-	sprintf(text, "Test counter: %i", test_counter);
-	render_text(540.0, WINDOW_HEIGHT - 50, text);
+	sprintf(text, "Algorithm: %s", algos[selected_algo]);
+	render_text(20.0, WINDOW_HEIGHT - 130, text);
+
+	sprintf(text, "Number of elements: %i", n_rectangles);
+	render_text(20.0, WINDOW_HEIGHT - 100, text);
+
+	render_text(WINDOW_WIDTH - 500, WINDOW_HEIGHT - 130, "Press 'a' or 's' to select an algorithm");
+	render_text(WINDOW_WIDTH - 500, WINDOW_HEIGHT - 100, "Press 'enter' to run the algorithm");
 
 	glutSwapBuffers();
 	glFlush();
@@ -82,9 +127,19 @@ void idle() {
 
 void keyboard(unsigned char key, int x, int y) {
 
-	// 13 is the ASCII value of ENTER key
+	// S
+	if (key == 115) {
+		algo_selector(1);
+	}
+
+	// A
+	if (key == 97) {
+		algo_selector(-1);
+	}
+
+	// Enter
 	if (key == 13) {
-		test_counter++;
+		bubble_sort();
 	}
 }
 
@@ -98,7 +153,7 @@ int main(int argc, char** argv) {
 	int i = 0;
 	while (i < n_rectangles) {
 		rectangles[i].width = RECT_WIDTH;
-		rectangles[i].height = random_int(100, WINDOW_HEIGHT - 100);
+		rectangles[i].height = random_int(100, WINDOW_HEIGHT - 200);
 		rectangles[i].x = x_pos;
 
 		x_pos += RECT_WIDTH + SPACE;
