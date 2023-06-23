@@ -2,52 +2,61 @@
 #include <stdlib.h>
 #include <GL/glut.h>
 #include <math.h>
+#include <time.h>
 
 
 #define WINDOW_HEIGHT 1080
 #define WINDOW_WIDTH 1920
+#define OFFSET 150
 #define RECT_WIDTH 5
-#define SPACE 5
+#define SPACE 1
 
 
 // Globals
 char* algos[] = {"Bubble sort", "Selection sort", "Insertion sort", "Quick sort"};
-
 int selected_algo = 0;
 int n_algos = sizeof(algos) / sizeof(algos[0]);
-int n_rectangles;
 
-struct Rectangle {
-	int width;
-	int height;
-	int x;
-};
-
-struct Rectangle* rectangles;
+int* arr;
+int arr_size;
 
 
 // Algos
 void bubble_sort() {
-	for (int i = 0; i < n_rectangles; i++) {
-		
-		struct Rectangle current = rectangles[i];
-		struct Rectangle next = rectangles[i + 1];
+	for (int step = 0; step < arr_size - 1; step++) {
 
-		printf("Current pos: %i\n", current.x);
-		printf("Next pos: %i\n", next.x);
+		for (int i = 0; i < arr_size - step - 1; i++) {
+			int current = arr[i];
+			int next = arr[i + 1];
 
-		// Place largest element at the end of the array
-		if (current.height > next.height) {
-			rectangles[i + 1].x = current.x;
-			rectangles[i].x = next.x;
+			if (current > next) {
+				arr[i + 1] = current;
+				arr[i] = next;
+			}
 		}
 	}
 }
 
 
-// Utils
-int random_int(int min, int max) {
-	return rand() % ((max - min) + 1) + min;
+void create_array() {
+	arr_size = floor((WINDOW_WIDTH - RECT_WIDTH) / (RECT_WIDTH + SPACE)) + 1;	
+	arr = (int*)malloc(arr_size * sizeof(int));
+
+	// srand(time(NULL));
+
+	int min = OFFSET;
+	int max = WINDOW_HEIGHT - OFFSET;
+
+	for (int i = 0; i < arr_size; i++) {
+		arr[i] = rand() % ((max - min) + 1) + min;
+	}
+}
+
+
+void print_array() {
+	for (int i = 0; i < arr_size; i++) {
+		printf("%d ", arr[i]);
+	}
 }
 
 
@@ -75,8 +84,12 @@ void setup() {
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 
-	// Set the coordinates to be used with the viewport
-	gluOrtho2D(0, WINDOW_WIDTH, WINDOW_HEIGHT, 0);
+	/* 
+	 * Creates projection matrix
+	 * x increases from left to right (0 to WINDOW_WIDTH)
+	 * y increases from bottom to top (0 to WINDOW_HEIGHT)
+	 */
+	gluOrtho2D(0, WINDOW_WIDTH, 0, WINDOW_HEIGHT);
 
 }
 
@@ -94,11 +107,22 @@ void display() {
 	glClear(GL_COLOR_BUFFER_BIT);
 	glBegin(GL_QUADS);
 
-	for (int i = 0; i < n_rectangles; i++) {
-		glVertex2f(rectangles[i].x, WINDOW_HEIGHT - 200);
-		glVertex2f(rectangles[i].x + rectangles[i].width, WINDOW_HEIGHT - 200);
-		glVertex2f(rectangles[i].x + rectangles[i].width, rectangles[i].height);
-		glVertex2d(rectangles[i].x, rectangles[i].height);
+	int x = 0;
+	for (int i = 0; i < arr_size; i++) {
+
+		// Bottom left
+		glVertex2f(x, OFFSET);
+
+		// Top left
+		glVertex2f(x, arr[i]);
+
+		// Top right
+		glVertex2f(x + RECT_WIDTH, arr[i]);
+
+		// Bottom right
+		glVertex2f(x + RECT_WIDTH, OFFSET);
+
+		x += RECT_WIDTH + SPACE;
 	}
 
 	glEnd();
@@ -107,13 +131,14 @@ void display() {
 	char text[256];
 
 	sprintf(text, "Algorithm: %s", algos[selected_algo]);
-	render_text(20.0, WINDOW_HEIGHT - 130, text);
+	render_text(20, OFFSET - 50, text);
 
-	sprintf(text, "Number of elements: %i", n_rectangles);
-	render_text(20.0, WINDOW_HEIGHT - 100, text);
+	sprintf(text, "Number of elements: %i", arr_size);
+	render_text(20, OFFSET - 75, text);
 
-	render_text(WINDOW_WIDTH - 500, WINDOW_HEIGHT - 130, "Press 'a' or 's' to select an algorithm");
-	render_text(WINDOW_WIDTH - 500, WINDOW_HEIGHT - 100, "Press 'enter' to run the algorithm");
+	render_text(WINDOW_WIDTH - 500, OFFSET - 50, "Press 'a' or 's' to select an algorithm");
+	render_text(WINDOW_WIDTH - 500, OFFSET - 75, "Press 'enter' to run the algorithm");
+	render_text(WINDOW_WIDTH - 500, OFFSET - 100, "Press 'r' to reset array");
 
 	glutSwapBuffers();
 	glFlush();
@@ -127,38 +152,37 @@ void idle() {
 
 void keyboard(unsigned char key, int x, int y) {
 
-	// S
+	// s
 	if (key == 115) {
 		algo_selector(1);
 	}
 
-	// A
+	// r
+	if (key == 114) {
+		create_array();
+	}
+
+	// a
 	if (key == 97) {
 		algo_selector(-1);
 	}
 
-	// Enter
+	// enter
 	if (key == 13) {
+		printf("Before sorting: ");
+		print_array();
+		printf("\n\n");
+
 		bubble_sort();
+
+		printf("After sorting: ");
+		print_array();
 	}
 }
 
 
 int main(int argc, char** argv) {
-	n_rectangles = floor((WINDOW_WIDTH - RECT_WIDTH) / (RECT_WIDTH + SPACE)) + 1;	
-	rectangles = malloc(n_rectangles * sizeof(struct Rectangle));
-
-	int x_pos = 1;
-
-	int i = 0;
-	while (i < n_rectangles) {
-		rectangles[i].width = RECT_WIDTH;
-		rectangles[i].height = random_int(100, WINDOW_HEIGHT - 200);
-		rectangles[i].x = x_pos;
-
-		x_pos += RECT_WIDTH + SPACE;
-		i++;
-	}
+	create_array();
 
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
@@ -170,7 +194,7 @@ int main(int argc, char** argv) {
 	glutIdleFunc(idle);
 	glutMainLoop();
 
-	free(rectangles);
+	free(arr);
 
 	return 0;
 }
