@@ -3,42 +3,57 @@
 #include <GL/glut.h>
 #include <math.h>
 #include <time.h>
+#include <stdbool.h>
 
 
 #define WINDOW_HEIGHT 1080
 #define WINDOW_WIDTH 1920
-#define FPS 60
 #define OFFSET 150
 #define RECT_WIDTH 5
 #define SPACE 1
 
 
 // Globals
-char* algos[] = {"Bubble sort", "Selection sort", "Insertion sort", "Quick sort"};
+char algos[4][50] = {
+	"Bubble sort", 
+	"Selection sort", 
+	"Insertion sort", 
+	"Quick sort"
+};
+
 int selected_algo = 0;
-int n_algos = sizeof(algos) / sizeof(algos[0]);
+int refresh_counter = 0;
+int iter_counter = 0;
+int arr_size;
 
 int* arr;
-int arr_size;
+
+bool run;
 
 
 // Algos
-int step = 0;
-int i = 0;
+
+struct BubbleSortInfo {
+	int step;
+	int i;
+};
+
+struct BubbleSortInfo bs = {0, 0};
+
 void bubble_sort() {
-	if (i < arr_size - step - 1) {
-		int current = arr[i];
-		int next = arr[i + 1];
+	if (bs.i < arr_size - bs.step - 1) {
+		int current = arr[bs.i];
+		int next = arr[bs.i + 1];
 
 		if (current > next) {
-			arr[i + 1] = current;
-			arr[i] = next;
+			arr[bs.i + 1] = current;
+			arr[bs.i] = next;
 		}
 
-		i++;
+		bs.i++;
 	} else {
-		step++;
-		i = 0;
+		bs.step++;
+		bs.i = 0;
 	}
 }
 
@@ -47,7 +62,7 @@ void create_array() {
 	arr_size = floor((WINDOW_WIDTH - RECT_WIDTH) / (RECT_WIDTH + SPACE)) + 1;	
 	arr = (int*)malloc(arr_size * sizeof(int));
 
-	// srand(time(NULL));
+	srand(time(NULL));
 
 	int min = OFFSET;
 	int max = WINDOW_HEIGHT - OFFSET;
@@ -58,10 +73,14 @@ void create_array() {
 }
 
 
-void print_array() {
-	for (int i = 0; i < arr_size; i++) {
-		printf("%d ", arr[i]);
+bool array_sorted() {
+	for (int i = 0; i < arr_size - 1; i++) {
+		if (arr[i] > arr[i + 1]) {
+			return false;
+		}
 	}
+
+	return true;
 }
 
 
@@ -141,6 +160,10 @@ void display() {
 	sprintf(text, "Number of elements: %i", arr_size);
 	render_text(20, OFFSET - 75, text);
 
+	sprintf(text, "Iterations: %i", iter_counter);
+	render_text(20, OFFSET - 100, text);
+
+
 	render_text(WINDOW_WIDTH - 500, OFFSET - 50, "Press 'a' or 's' to select an algorithm");
 	render_text(WINDOW_WIDTH - 500, OFFSET - 75, "Press 'enter' to run the algorithm");
 	render_text(WINDOW_WIDTH - 500, OFFSET - 100, "Press 'r' to reset array");
@@ -149,10 +172,24 @@ void display() {
 }
 
 
-void timer(int value) {
-	bubble_sort();
-	glutPostRedisplay();
-	glutTimerFunc(1000 / 800, timer, 0);
+void idle() {
+	if (run) {
+		bubble_sort();
+		refresh_counter++;
+		iter_counter++;
+
+		if (refresh_counter == 90) {
+			glutPostRedisplay();
+			refresh_counter = 0;
+		}
+
+	} else {
+		glutPostRedisplay();
+	}
+
+	if (array_sorted()) {
+		run = false;
+	}
 }
 
 
@@ -163,26 +200,23 @@ void keyboard(unsigned char key, int x, int y) {
 		algo_selector(1);
 	}
 
-	// r
-	if (key == 114) {
-		create_array();
-	}
-
 	// a
 	if (key == 97) {
 		algo_selector(-1);
 	}
 
+	// r
+	if (key == 114) {
+		create_array();
+		iter_counter = 0;
+		refresh_counter = 0;
+		run = false;
+		bs = (struct BubbleSortInfo){0, 0};
+	}
+
 	// enter
 	if (key == 13) {
-		printf("Before sorting: ");
-		print_array();
-		printf("\n\n");
-
-		bubble_sort();
-
-		printf("After sorting: ");
-		print_array();
+		run = true;
 	}
 }
 
@@ -197,7 +231,7 @@ int main(int argc, char** argv) {
 	setup();
 	glutDisplayFunc(display);
 	glutKeyboardFunc(keyboard);
-	glutTimerFunc(0, timer, 0);
+	glutIdleFunc(idle);
 	glutMainLoop();
 
 	free(arr);
