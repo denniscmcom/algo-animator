@@ -1,12 +1,24 @@
 #include "utils.h"
+#include <GL/glut.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <math.h>
-#include <time.h>
 
 
 #define WINDOW_HEIGHT 1080
 #define WINDOW_WIDTH 1920
+#define RECT_WIDTH 5
+#define SPACE 5
+
+
+struct Rectangle {
+	int width;
+	int height;
+	int x;
+};
+
+// Globals
+struct Rectangle* rectangles;
+int n_rectangles;
 
 
 void setup() {
@@ -27,57 +39,48 @@ void setup() {
 }
 
 
-struct Rectangle {
-	int width;
-	int height;
-	int x_position;
-};
-
-
 void display() {
 	glClear(GL_COLOR_BUFFER_BIT);
 	glBegin(GL_QUADS);
 
-	float x_position = 1;
-	float rect_width = 5.0;
-	float space = 5.0;
-
-	// Compute max number of rectangles to fit the windows
-	int max_rects = floor((WINDOW_WIDTH - rect_width) / (rect_width + space)) + x_position;	
-
-	struct Rectangle *rectangles = malloc(max_rects * sizeof(struct Rectangle));
-	int rect_counter = 0;
-
-	while (rect_counter < max_rects) {
-		struct Rectangle rectangle;
-		rectangle.width = rect_width;
-		rectangle.height = random_int(100, WINDOW_HEIGHT - 100);
-		rectangle.x_position = x_position;
-		rectangles[rect_counter] = rectangle;
-
-		draw_rectangle(
-				rectangle.x_position, 
-				rectangle.height, 
-				rectangle.width, 
-				WINDOW_HEIGHT
-		);
-
-		x_position += rect_width + space;
-		rect_counter++;
+	for (int i = 0; i < n_rectangles; i++) {
+		glVertex2f(rectangles[i].x, WINDOW_HEIGHT - 100);
+		glVertex2f(rectangles[i].x + rectangles[i].width, WINDOW_HEIGHT - 100);
+		glVertex2f(rectangles[i].x + rectangles[i].width, rectangles[i].height);
+		glVertex2d(rectangles[i].x, rectangles[i].height);
 	}
 
 	glEnd();
 
+	// Render text
 	char text[256];
-	sprintf(text, "Number of elements: %i", rect_counter);
-	render_text(text, 20.0, WINDOW_HEIGHT - 50);	
+	sprintf(text, "Number of elements: %i", n_rectangles);
+	glRasterPos2f(20.0, WINDOW_HEIGHT - 50);
 
-	free(rectangles);
+	for (const char *c = text; *c; ++c) {
+		glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, *c);
+	}
+
 	glFlush();
 }
 
 
 int main(int argc, char** argv) {
+	n_rectangles = floor((WINDOW_WIDTH - RECT_WIDTH) / (RECT_WIDTH + SPACE)) + 1;	
+	rectangles = malloc(n_rectangles * sizeof(struct Rectangle));
+
+	int x_pos = 1;
+
+	int i = 0;
+	while (i < n_rectangles) {
+		rectangles[i].width = RECT_WIDTH;
+		rectangles[i].height = random_int(100, WINDOW_HEIGHT - 100);
+		rectangles[i].x = x_pos;
+
+		x_pos += RECT_WIDTH + SPACE;
+		i++;
+	}
+
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB);
 	glutInitWindowSize(WINDOW_WIDTH, WINDOW_HEIGHT);
@@ -86,5 +89,9 @@ int main(int argc, char** argv) {
 	glutDisplayFunc(display);
 	glutMainLoop();
 
+	free(rectangles);
+
 	return 0;
 }
+
+
