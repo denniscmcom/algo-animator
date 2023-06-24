@@ -2,5 +2,6 @@
 
 ## Compile and run
 ```bash
-gcc main.c utils.c -lglut -lGL -lGLU -lm && ./a.out
+gcc main.c -lglut -lGL -lGLU -lm -I/usr/local/include/freetype2 -L/usr/local/lib -lfreetype
+./a.out
 ```

@@ -4,6 +4,8 @@
 #include <math.h>
 #include <time.h>
 #include <stdbool.h>
+#include <ft2build.h>
+#include FT_FREETYPE_H
 
 
 #define WINDOW_HEIGHT 1080
@@ -13,7 +15,11 @@
 #define SPACE 1
 
 
-// Globals
+/* Global variables */
+
+FT_Library ft_library;
+FT_Face ft_face;
+
 char algos[4][50] = {
 	"Bubble sort", 
 	"Selection sort", 
@@ -31,8 +37,9 @@ int* arr;
 bool run;
 
 
-// Algos
+/* Algorithms */
 
+// Bubble sort
 struct BubbleSortInfo {
 	int step;
 	int i;
@@ -57,6 +64,8 @@ void bubble_sort() {
 	}
 }
 
+
+/* Helper functions */
 
 void create_array() {
 	arr_size = floor((WINDOW_WIDTH - RECT_WIDTH) / (RECT_WIDTH + SPACE)) + 1;	
@@ -94,36 +103,32 @@ void algo_selector(int direction) {
 	}
 }
 
-// GL and GLUT
-void setup() {
 
-	// Set background dark
-	glClearColor(0.0, 0.0, 0.0, 1.0);
-
-	// Set point color and size to 1 pixel
-	glColor3f(0.0, 1.0, 0.0);
-	glPointSize(5.0);
-
-	// Matrix projection and reset with identity
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-
-	/* 
-	 * Creates projection matrix
-	 * x increases from left to right (0 to WINDOW_WIDTH)
-	 * y increases from bottom to top (0 to WINDOW_HEIGHT)
-	 */
-	gluOrtho2D(0, WINDOW_WIDTH, 0, WINDOW_HEIGHT);
-
-}
-
+/* Render functions */
 
 void render_text(int x, int y, char* text) {
 	glRasterPos2f(x, y);
 
-	for (const char *c = text; *c; ++c) {
-		glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, *c);
+	// Get glyph index from character code
+	FT_UInt glyph_index = FT_Get_Char_Index(ft_face, 'o');
+
+	// Load glyph image
+	if (FT_Load_Glyph(ft_face, glyph_index, FT_LOAD_DEFAULT)) {
+		fprintf(stderr, "Failed to load glyph.\n");
+		exit(1);
 	}
+
+
+	// Render glyph
+	if (FT_Render_Glyph(ft_face->glyph, FT_RENDER_MODE_NORMAL)) {
+		fprintf(stderr, "Failed to load glyph.\n");
+		exit(1);
+	}
+
+	FT_GlyphSlot ft_slot = ft_face->glyph;
+	FT_Bitmap* glyph_bitmap = &ft_slot->bitmap;
+	
+	glDrawPixels(glyph_bitmap->width, glyph_bitmap->rows, GL_LUMINANCE, GL_UNSIGNED_BYTE, glyph_bitmap->buffer);
 }
 
 
@@ -155,22 +160,23 @@ void display() {
 	char text[256];
 
 	sprintf(text, "Algorithm: %s", algos[selected_algo]);
-	render_text(20, OFFSET - 50, text);
+	render_text(20, WINDOW_HEIGHT - 50, text);
 
 	sprintf(text, "Number of elements: %i", arr_size);
-	render_text(20, OFFSET - 75, text);
+	render_text(20, WINDOW_HEIGHT - 75, text);
 
 	sprintf(text, "Iterations: %i", iter_counter);
-	render_text(20, OFFSET - 100, text);
+	render_text(20, WINDOW_HEIGHT - 100, text);
 
-
-	render_text(WINDOW_WIDTH - 500, OFFSET - 50, "Press 'a' or 's' to select an algorithm");
-	render_text(WINDOW_WIDTH - 500, OFFSET - 75, "Press 'enter' to run the algorithm");
-	render_text(WINDOW_WIDTH - 500, OFFSET - 100, "Press 'r' to reset array");
+	render_text(20, OFFSET - 50, "Press 'a' or 's' to select an algorithm");
+	render_text(20, OFFSET - 75, "Press 'enter' to run the algorithm");
+	render_text(20, OFFSET - 100, "Press 'r' to reset array");
 
 	glutSwapBuffers();
 }
 
+
+/* Refresh function */
 
 void idle() {
 	if (run) {
@@ -192,6 +198,8 @@ void idle() {
 	}
 }
 
+
+/* User input handler */
 
 void keyboard(unsigned char key, int x, int y) {
 
@@ -221,14 +229,66 @@ void keyboard(unsigned char key, int x, int y) {
 }
 
 
+/* Set up functions */
+
+void init_gl() {
+
+	// Set background dark
+	glClearColor(0.0, 0.0, 0.0, 1.0);
+
+	// Set point color and size to 1 pixel
+	glColor3f(1.0, 0.7569, 0.0);
+	glPointSize(5.0);
+
+	// Matrix projection and reset with identity
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+
+	/* 
+	 * Creates projection matrix
+	 * x increases from left to right (0 to WINDOW_WIDTH)
+	 * y increases from bottom to top (0 to WINDOW_HEIGHT)
+	 */
+	gluOrtho2D(0, WINDOW_WIDTH, 0, WINDOW_HEIGHT);
+}
+
+
+void init_freetype() {
+
+	// Init library
+	if (FT_Init_FreeType(&ft_library)) {
+		fprintf(stderr, "Failed to initialize FreeType library\n");
+		exit(1);
+	}
+
+	// Load font
+	if (FT_New_Face(ft_library, "JetBrainsMono-Medium.ttf", 0, &ft_face)) {
+		fprintf(stderr, "Failed to load font\n");
+		exit(1);
+	}
+
+	// Set font size
+	if (FT_Set_Pixel_Sizes(ft_face, 0, 24)) {
+		fprintf(stderr, "Failed to set font size.\n");
+		FT_Done_Face(ft_face);
+		FT_Done_FreeType(ft_library);
+
+		exit(1);
+	}
+}
+
+
 int main(int argc, char** argv) {
 	create_array();
 
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
 	glutInitWindowSize(WINDOW_WIDTH, WINDOW_HEIGHT);
-	glutCreateWindow("OpenGL Window");
-	setup();
+	glutCreateWindow("Algorithm animator");
+
+	init_gl();
+	init_freetype();
+
 	glutDisplayFunc(display);
 	glutKeyboardFunc(keyboard);
 	glutIdleFunc(idle);
@@ -238,5 +298,3 @@ int main(int argc, char** argv) {
 
 	return 0;
 }
-
-
