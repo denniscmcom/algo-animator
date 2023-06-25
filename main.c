@@ -106,39 +106,64 @@ void algo_selector(int direction) {
 
 /* Render functions */
 
+unsigned char* flipBitmapVertically(unsigned char* bitmap, int width, int height) {
+    unsigned char* flippedBitmap = (unsigned char*)malloc(width * height);
+
+    for (int row = 0; row < height; row++) {
+        unsigned char* srcRow = bitmap + (row * width);
+        unsigned char* destRow = flippedBitmap + ((height - row - 1) * width);
+        memcpy(destRow, srcRow, width);
+    }
+
+    return flippedBitmap;
+}
+
+
 void render_text(int x, int y, char* text) {
+	for (const char *c = text; *c; c++) {
+	
+		// Get glyph index from character code
+		FT_UInt glyph_index = FT_Get_Char_Index(ft_face, *c);
 
-	// Get glyph index from character code
-	FT_UInt glyph_index = FT_Get_Char_Index(ft_face, 'A');
+		if (glyph_index == 0) {
+			fprintf(stderr, "Given character code has no glyph image in the face\n");
+			exit(1);
+		}
 
-	if (glyph_index == 0) {
-		fprintf(stderr, "Given character code has no glyph image in the face\n");
-		exit(1);
+		// Load glyph image
+		if (FT_Load_Glyph(ft_face, glyph_index, FT_LOAD_DEFAULT)) {
+			fprintf(stderr, "Failed to load glyph.\n");
+			exit(1);
+		}
+
+		// Render glyph
+		if (FT_Render_Glyph(ft_face->glyph, FT_RENDER_MODE_NORMAL)) {
+			fprintf(stderr, "Failed to render glyph.\n");
+			exit(1);
+		}
+
+		FT_GlyphSlot slot = ft_face->glyph;
+		FT_Bitmap* glyph_bitmap = &slot->bitmap;
+
+		// Flip the bitmap vertically
+		unsigned char* flipped_bitmap = (unsigned char*)malloc(glyph_bitmap->width * glyph_bitmap->rows);
+
+		for (int row = 0; row < glyph_bitmap->rows; row++) {
+			unsigned char* src_row = glyph_bitmap->buffer + (row * glyph_bitmap->width);
+			unsigned char* dest_row = flipped_bitmap + ((glyph_bitmap->rows - row - 1) * glyph_bitmap->width);
+			memcpy(dest_row, src_row, glyph_bitmap->width);
+		}
+
+        glyph_bitmap->buffer = flipped_bitmap;
+
+        // Calculate the adjusted y position based on the glyph's bearing
+        int adjusted_y = y + (slot->bitmap_top - glyph_bitmap->rows);
+
+		glRasterPos2f(x, adjusted_y);
+		glDrawPixels(glyph_bitmap->width, glyph_bitmap->rows, GL_LUMINANCE, GL_UNSIGNED_BYTE, glyph_bitmap->buffer);
+
+		x += 15;
 	}
-
-	// Load glyph image
-	if (FT_Load_Glyph(ft_face, glyph_index, FT_LOAD_DEFAULT)) {
-		fprintf(stderr, "Failed to load glyph.\n");
-		exit(1);
-	}
-
-	// Render glyph
-	if (FT_Render_Glyph(ft_face->glyph, FT_RENDER_MODE_NORMAL)) {
-		fprintf(stderr, "Failed to render glyph.\n");
-		exit(1);
-	}
-
-	FT_GlyphSlot slot = ft_face->glyph;
-	FT_Bitmap* glyph_bitmap = &slot->bitmap;
-
-	glRasterPos2f(x, y);
-	glDrawPixels(
-			glyph_bitmap->width, 
-			glyph_bitmap->rows, 
-			GL_LUMINANCE, 
-			GL_UNSIGNED_BYTE, 
-			glyph_bitmap->buffer
-			);
 }
 
 
@@ -174,14 +199,14 @@ void display() {
 	render_text(20, WINDOW_HEIGHT - 50, text);
 
 	sprintf(text, "Number of elements: %i", arr_size);
-	render_text(20, WINDOW_HEIGHT - 75, text);
+	render_text(20, WINDOW_HEIGHT - 80, text);
 
 	sprintf(text, "Iterations: %i", iter_counter);
-	render_text(20, WINDOW_HEIGHT - 100, text);
+	render_text(20, WINDOW_HEIGHT - 110, text);
 
-	render_text(20, OFFSET - 50, "Press 'a' or 's' to select an algorithm");
-	render_text(20, OFFSET - 75, "Press 'enter' to run the algorithm");
-	render_text(20, OFFSET - 100, "Press 'r' to reset array");
+	render_text(20, OFFSET - 50, "Press a or s to select an algorithm");
+	render_text(20, OFFSET - 80, "Press enter to run the algorithm");
+	render_text(20, OFFSET - 110, "Press r to reset array");
 
 	glutSwapBuffers();
 }
@@ -260,10 +285,11 @@ void setup_gl() {
 	 * x increases from left to right (0 to WINDOW_WIDTH)
 	 * y increases from bottom to top (0 to WINDOW_HEIGHT)
 	 */
+
 	gluOrtho2D(0, WINDOW_WIDTH, 0, WINDOW_HEIGHT);
 
 	/* 
-	 * This fucking line... I spent a day rendering random symbols
+	 * This fucking line... I spent a day rendering weird symbols
 	 * because the padding that adds FreeType to each row of the bitmap
 	 * does not match the padding expected by GL.
 	 */
@@ -314,6 +340,9 @@ int main(int argc, char** argv) {
 	glutMainLoop();
 
 	free(arr);
+
+	FT_Done_Face(ft_face);
+    FT_Done_FreeType(ft_library);
 
 	return 0;
 }
