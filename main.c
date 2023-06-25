@@ -45,7 +45,7 @@ struct BubbleSortInfo {
 	int i;
 };
 
-struct BubbleSortInfo bs = {0, 0};
+struct BubbleSortInfo bs = {1, 0};
 
 void bubble_sort() {
 	if (bs.i < arr_size - bs.step - 1) {
@@ -107,10 +107,14 @@ void algo_selector(int direction) {
 /* Render functions */
 
 void render_text(int x, int y, char* text) {
-	glRasterPos2f(x, y);
 
 	// Get glyph index from character code
-	FT_UInt glyph_index = FT_Get_Char_Index(ft_face, 'o');
+	FT_UInt glyph_index = FT_Get_Char_Index(ft_face, 'A');
+
+	if (glyph_index == 0) {
+		fprintf(stderr, "Given character code has no glyph image in the face\n");
+		exit(1);
+	}
 
 	// Load glyph image
 	if (FT_Load_Glyph(ft_face, glyph_index, FT_LOAD_DEFAULT)) {
@@ -118,22 +122,29 @@ void render_text(int x, int y, char* text) {
 		exit(1);
 	}
 
-
 	// Render glyph
 	if (FT_Render_Glyph(ft_face->glyph, FT_RENDER_MODE_NORMAL)) {
-		fprintf(stderr, "Failed to load glyph.\n");
+		fprintf(stderr, "Failed to render glyph.\n");
 		exit(1);
 	}
 
-	FT_GlyphSlot ft_slot = ft_face->glyph;
-	FT_Bitmap* glyph_bitmap = &ft_slot->bitmap;
-	
-	glDrawPixels(glyph_bitmap->width, glyph_bitmap->rows, GL_LUMINANCE, GL_UNSIGNED_BYTE, glyph_bitmap->buffer);
+	FT_GlyphSlot slot = ft_face->glyph;
+	FT_Bitmap* glyph_bitmap = &slot->bitmap;
+
+	glRasterPos2f(x, y);
+	glDrawPixels(
+			glyph_bitmap->width, 
+			glyph_bitmap->rows, 
+			GL_LUMINANCE, 
+			GL_UNSIGNED_BYTE, 
+			glyph_bitmap->buffer
+			);
 }
 
 
 void display() {
 	glClear(GL_COLOR_BUFFER_BIT);
+
 	glBegin(GL_QUADS);
 
 	int x = 0;
@@ -231,7 +242,7 @@ void keyboard(unsigned char key, int x, int y) {
 
 /* Set up functions */
 
-void init_gl() {
+void setup_gl() {
 
 	// Set background dark
 	glClearColor(0.0, 0.0, 0.0, 1.0);
@@ -250,10 +261,18 @@ void init_gl() {
 	 * y increases from bottom to top (0 to WINDOW_HEIGHT)
 	 */
 	gluOrtho2D(0, WINDOW_WIDTH, 0, WINDOW_HEIGHT);
+
+	/* 
+	 * This fucking line... I spent a day rendering random symbols
+	 * because the padding that adds FreeType to each row of the bitmap
+	 * does not match the padding expected by GL.
+	 */
+
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 }
 
 
-void init_freetype() {
+void setup_freetype() {
 
 	// Init library
 	if (FT_Init_FreeType(&ft_library)) {
@@ -262,7 +281,7 @@ void init_freetype() {
 	}
 
 	// Load font
-	if (FT_New_Face(ft_library, "JetBrainsMono-Medium.ttf", 0, &ft_face)) {
+	if (FT_New_Face(ft_library, "fonts/JetBrainsMono-Regular.ttf", 0, &ft_face)) {
 		fprintf(stderr, "Failed to load font\n");
 		exit(1);
 	}
@@ -286,8 +305,8 @@ int main(int argc, char** argv) {
 	glutInitWindowSize(WINDOW_WIDTH, WINDOW_HEIGHT);
 	glutCreateWindow("Algorithm animator");
 
-	init_gl();
-	init_freetype();
+	setup_gl();
+	setup_freetype();
 
 	glutDisplayFunc(display);
 	glutKeyboardFunc(keyboard);
