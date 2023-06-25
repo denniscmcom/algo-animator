@@ -10,7 +10,7 @@
 
 #define WINDOW_HEIGHT 1080
 #define WINDOW_WIDTH 1920
-#define OFFSET 150
+#define VPADDING 150
 #define RECT_WIDTH 5
 #define SPACE 1
 
@@ -73,8 +73,8 @@ void create_array() {
 
 	srand(time(NULL));
 
-	int min = OFFSET;
-	int max = WINDOW_HEIGHT - OFFSET;
+	int min = VPADDING;
+	int max = WINDOW_HEIGHT - VPADDING;
 
 	for (int i = 0; i < arr_size; i++) {
 		arr[i] = rand() % ((max - min) + 1) + min;
@@ -158,7 +158,7 @@ void render_text(int x, int y, char* text) {
 
         // Calculate the adjusted y position based on the glyph's bearing
         int adjusted_y = y + (slot->bitmap_top - glyph_bitmap->rows);
-
+	
 		glRasterPos2f(x, adjusted_y);
 		glDrawPixels(glyph_bitmap->width, glyph_bitmap->rows, GL_LUMINANCE, GL_UNSIGNED_BYTE, glyph_bitmap->buffer);
 
@@ -176,7 +176,7 @@ void display() {
 	for (int i = 0; i < arr_size; i++) {
 
 		// Bottom left
-		glVertex2f(x, OFFSET);
+		glVertex2f(x, VPADDING);
 
 		// Top left
 		glVertex2f(x, arr[i]);
@@ -185,7 +185,7 @@ void display() {
 		glVertex2f(x + RECT_WIDTH, arr[i]);
 
 		// Bottom right
-		glVertex2f(x + RECT_WIDTH, OFFSET);
+		glVertex2f(x + RECT_WIDTH, VPADDING);
 
 		x += RECT_WIDTH + SPACE;
 	}
@@ -204,9 +204,9 @@ void display() {
 	sprintf(text, "Iterations: %i", iter_counter);
 	render_text(20, WINDOW_HEIGHT - 110, text);
 
-	render_text(20, OFFSET - 50, "Press a or s to select an algorithm");
-	render_text(20, OFFSET - 80, "Press enter to run the algorithm");
-	render_text(20, OFFSET - 110, "Press r to reset array");
+	render_text(20, VPADDING - 50, "Press a or s to select an algorithm");
+	render_text(20, VPADDING - 80, "Press enter to run the algorithm");
+	render_text(20, VPADDING - 110, "Press r to reset array");
 
 	glutSwapBuffers();
 }
@@ -251,10 +251,16 @@ void keyboard(unsigned char key, int x, int y) {
 
 	// r
 	if (key == 114) {
+
+		// Reset array
 		create_array();
+
+		// Reset state
 		iter_counter = 0;
 		refresh_counter = 0;
 		run = false;
+
+		// Reset algo steps
 		bs = (struct BubbleSortInfo){0, 0};
 	}
 
