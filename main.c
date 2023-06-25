@@ -28,11 +28,12 @@ char algos[4][50] = {
 };
 
 int selected_algo = 0;
+int speed = 5;
 int refresh_counter = 0;
 int iter_counter = 0;
 int arr_size;
 
-int* arr;
+float* arr;
 
 bool run;
 
@@ -49,8 +50,8 @@ struct BubbleSortInfo bs = {1, 0};
 
 void bubble_sort() {
 	if (bs.i < arr_size - bs.step - 1) {
-		int current = arr[bs.i];
-		int next = arr[bs.i + 1];
+		float current = arr[bs.i];
+		float next = arr[bs.i + 1];
 
 		if (current > next) {
 			arr[bs.i + 1] = current;
@@ -68,16 +69,28 @@ void bubble_sort() {
 /* Helper functions */
 
 void create_array() {
-	arr_size = floor((WINDOW_WIDTH - RECT_WIDTH) / (RECT_WIDTH + SPACE)) + 1;	
-	arr = (int*)malloc(arr_size * sizeof(int));
+	arr_size = WINDOW_WIDTH / (RECT_WIDTH + SPACE);
+	arr = (float*)malloc(arr_size * sizeof(float));
 
+	float rect_increase = (WINDOW_HEIGHT - VPADDING * 2) / (float)(arr_size - 1);
+
+	for (int i = 1; i <= arr_size; i++) {
+		arr[i - 1] = i * rect_increase;
+	}
+}
+
+
+void randomize_array() {
 	srand(time(NULL));
 
-	int min = VPADDING;
-	int max = WINDOW_HEIGHT - VPADDING;
+	// Fisher-Yates shuffle
+	for (int i = arr_size - 1; i > 0; i--) {
+		int j = rand() % (i + 1);
 
-	for (int i = 0; i < arr_size; i++) {
-		arr[i] = rand() % ((max - min) + 1) + min;
+		// Swap
+		float temp = arr[i];
+		arr[i] = arr[j];
+		arr[j] = temp;
 	}
 }
 
@@ -105,19 +118,6 @@ void algo_selector(int direction) {
 
 
 /* Render functions */
-
-unsigned char* flipBitmapVertically(unsigned char* bitmap, int width, int height) {
-    unsigned char* flippedBitmap = (unsigned char*)malloc(width * height);
-
-    for (int row = 0; row < height; row++) {
-        unsigned char* srcRow = bitmap + (row * width);
-        unsigned char* destRow = flippedBitmap + ((height - row - 1) * width);
-        memcpy(destRow, srcRow, width);
-    }
-
-    return flippedBitmap;
-}
-
 
 void render_text(int x, int y, char* text) {
 	for (const char *c = text; *c; c++) {
@@ -179,10 +179,10 @@ void display() {
 		glVertex2f(x, VPADDING);
 
 		// Top left
-		glVertex2f(x, arr[i]);
+		glVertex2f(x, VPADDING + arr[i]);
 
 		// Top right
-		glVertex2f(x + RECT_WIDTH, arr[i]);
+		glVertex2f(x + RECT_WIDTH, VPADDING + arr[i]);
 
 		// Bottom right
 		glVertex2f(x + RECT_WIDTH, VPADDING);
@@ -195,18 +195,29 @@ void display() {
 	// Render text
 	char text[256];
 
+
+	// Top: Column 1
 	sprintf(text, "Algorithm: %s", algos[selected_algo]);
 	render_text(20, WINDOW_HEIGHT - 50, text);
-
-	sprintf(text, "Number of elements: %i", arr_size);
+	
+	sprintf(text, "Speed: %i", speed);
 	render_text(20, WINDOW_HEIGHT - 80, text);
+	
+	// Top: Column 2
+	sprintf(text, "Number of elements: %i", arr_size);
+	render_text(500, WINDOW_HEIGHT - 50, text);
 
 	sprintf(text, "Iterations: %i", iter_counter);
-	render_text(20, WINDOW_HEIGHT - 110, text);
+	render_text(500, WINDOW_HEIGHT - 80, text);
 
-	render_text(20, VPADDING - 50, "Press a or s to select an algorithm");
-	render_text(20, VPADDING - 80, "Press enter to run the algorithm");
-	render_text(20, VPADDING - 110, "Press r to reset array");
+
+	// Bottom: Column 1
+	render_text(20, VPADDING - 50, "Press a or s to select an algorithm.");
+	render_text(20, VPADDING - 80, "Press u or d to modify speed.");
+	render_text(20, VPADDING - 110, "Press r to randomize the array.");
+
+	// Bottom: Column 2
+	render_text(800, VPADDING - 50, "Press enter to run the algorithm.");
 
 	glutSwapBuffers();
 }
@@ -220,7 +231,7 @@ void idle() {
 		refresh_counter++;
 		iter_counter++;
 
-		if (refresh_counter == 90) {
+		if (refresh_counter == speed) {
 			glutPostRedisplay();
 			refresh_counter = 0;
 		}
@@ -239,21 +250,19 @@ void idle() {
 
 void keyboard(unsigned char key, int x, int y) {
 
-	// s
+	// s: Next algorithm
 	if (key == 115) {
 		algo_selector(1);
 	}
 
-	// a
+	// a: Previous algorithm
 	if (key == 97) {
 		algo_selector(-1);
 	}
 
-	// r
+	// r: Reset state
 	if (key == 114) {
-
-		// Reset array
-		create_array();
+		randomize_array();
 
 		// Reset state
 		iter_counter = 0;
@@ -264,9 +273,19 @@ void keyboard(unsigned char key, int x, int y) {
 		bs = (struct BubbleSortInfo){0, 0};
 	}
 
-	// enter
+	// enter: Run program
 	if (key == 13) {
 		run = true;
+	}
+
+	// u: Increase speed
+	if (key == 117) {
+		speed++;
+	}
+
+	// d: reduce speed
+	if (key == 100) {
+		speed--;
 	}
 }
 
