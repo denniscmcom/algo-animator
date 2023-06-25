@@ -1,3 +1,0 @@
-void bubble_sort() {
-
-}
