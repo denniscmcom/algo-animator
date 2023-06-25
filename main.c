@@ -20,12 +20,12 @@
 FT_Library ft_library;
 FT_Face ft_face;
 
-char algos[4][50] = {
-	"Bubble sort", 
-	"Selection sort", 
-	"Insertion sort", 
-	"Quick sort"
+struct Algo {
+	char name[50];
+	void (*function)();
 };
+
+struct Algo algos[1];
 
 int selected_algo = 0;
 int speed = 5;
@@ -162,7 +162,7 @@ void render_text(int x, int y, char* text) {
 		glRasterPos2f(x, adjusted_y);
 		glDrawPixels(glyph_bitmap->width, glyph_bitmap->rows, GL_LUMINANCE, GL_UNSIGNED_BYTE, glyph_bitmap->buffer);
 
-		x += 15;
+		x += slot->advance.x / 64;
 	}
 }
 
@@ -195,9 +195,8 @@ void display() {
 	// Render text
 	char text[256];
 
-
 	// Top: Column 1
-	sprintf(text, "Algorithm: %s", algos[selected_algo]);
+	sprintf(text, "Algorithm: %s", algos[selected_algo].name);
 	render_text(20, WINDOW_HEIGHT - 50, text);
 	
 	sprintf(text, "Speed: %i", speed);
@@ -227,7 +226,7 @@ void display() {
 
 void idle() {
 	if (run) {
-		bubble_sort();
+		algos[selected_algo].function();
 		refresh_counter++;
 		iter_counter++;
 
@@ -272,12 +271,7 @@ void keyboard(unsigned char key, int x, int y) {
 		// Reset algo steps
 		bs = (struct BubbleSortInfo){0, 0};
 	}
-
-	// enter: Run program
-	if (key == 13) {
-		run = true;
-	}
-
+	
 	// u: Increase speed
 	if (key == 117) {
 		speed++;
@@ -287,6 +281,13 @@ void keyboard(unsigned char key, int x, int y) {
 	if (key == 100) {
 		speed--;
 	}
+	
+	// enter: Run program
+	if (key == 13) {
+		run = true;
+	}
+
+	
 }
 
 
@@ -349,6 +350,9 @@ void setup_freetype() {
 
 
 int main(int argc, char** argv) {
+	strcpy(algos[0].name, "Bubble sort");
+	algos[0].function = &bubble_sort;
+
 	create_array();
 
 	glutInit(&argc, argv);
