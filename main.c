@@ -33,7 +33,13 @@ int refresh_counter = 0;
 int iter_counter = 0;
 int arr_size;
 
-float *arr;
+
+struct Element {
+	float value;
+	bool current;
+};
+
+struct Element *arr;
 
 bool run;
 
@@ -51,7 +57,7 @@ struct AlgoState as = {0, 0, 0};
 
 
 void swap_elements(int x, int y) {
-	float temp = arr[x];
+	struct Element temp = arr[x];
 	arr[x] = arr[y];
 	arr[y] = temp;
 }
@@ -65,7 +71,9 @@ void bubble_sort() {
 	 */
 
 	if (as.a < arr_size - 1 - as.b) {
-		if (arr[as.a] > arr[as.a + 1]) {
+		arr[as.a].current = true;
+
+		if (arr[as.a].value > arr[as.a + 1].value) {
 			swap_elements(as.a + 1, as.a);
 		}
 
@@ -87,7 +95,9 @@ void selection_sort() {
 	
 
 	if (as.a < arr_size) {
-		if (arr[as.a] < arr[as.c]) {
+		arr[as.a].current = true;
+
+		if (arr[as.a].value < arr[as.c].value) {
 			
 			// Save new minimum
 			as.c = as.a;
@@ -108,12 +118,13 @@ void selection_sort() {
 
 void create_array() {
 	arr_size = WINDOW_WIDTH / (RECT_WIDTH + SPACE);
-	arr = (float*)malloc(arr_size * sizeof(float));
+	arr = malloc(arr_size * sizeof(struct Element));
 
 	float rect_increase = (WINDOW_HEIGHT - VPADDING * 2) / (float)(arr_size - 1);
 
 	for (int i = 1; i <= arr_size; i++) {
-		arr[i - 1] = i * rect_increase;
+		arr[i - 1].value = i * rect_increase;
+		arr[i - 1].current = false;
 	}
 }
 
@@ -126,16 +137,14 @@ void randomize_array() {
 		int j = rand() % (i + 1);
 
 		// Swap
-		float temp = arr[i];
-		arr[i] = arr[j];
-		arr[j] = temp;
+		swap_elements(i, j);
 	}
 }
 
 
 bool array_sorted() {
 	for (int i = 0; i < arr_size - 1; i++) {
-		if (arr[i] > arr[i + 1]) {
+		if (arr[i].value > arr[i + 1].value) {
 			return false;
 		}
 	}
@@ -214,20 +223,28 @@ void display() {
 
 	int x = 0;
 	for (int i = 0; i < arr_size; i++) {
+		
+		if (arr[i].current) {
+			glColor3f(1.0, 1.0, 1.0);
+		} else {
+			glColor3f(1.0, 0.7569, 0.0);
+		}
 
 		// Bottom left
 		glVertex2f(x, VPADDING);
 
 		// Top left
-		glVertex2f(x, VPADDING + arr[i]);
+		glVertex2f(x, VPADDING + arr[i].value);
 
 		// Top right
-		glVertex2f(x + RECT_WIDTH, VPADDING + arr[i]);
+		glVertex2f(x + RECT_WIDTH, VPADDING + arr[i].value);
 
 		// Bottom right
 		glVertex2f(x + RECT_WIDTH, VPADDING);
 
 		x += RECT_WIDTH + SPACE;
+
+		arr[i].current = false;
 	}
 
 	glEnd();
