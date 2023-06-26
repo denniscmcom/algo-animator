@@ -25,43 +25,81 @@ struct Algo {
 	void (*function)();
 };
 
-struct Algo algos[1];
+struct Algo algos[2];
 
 int selected_algo = 0;
-int speed = 5;
+int speed = 1;
 int refresh_counter = 0;
 int iter_counter = 0;
 int arr_size;
 
-float* arr;
+float *arr;
 
 bool run;
 
 
 /* Algorithms */
 
-// Bubble sort
-struct BubbleSortInfo {
-	int step;
-	int i;
+// Just some variables to store the state of the running algorithm
+struct AlgoState {
+	int a;
+	int b;
+	int c;
 };
 
-struct BubbleSortInfo bs = {1, 0};
+struct AlgoState as = {0, 0, 0};
+
+
+void swap_elements(int x, int y) {
+	float temp = arr[x];
+	arr[x] = arr[y];
+	arr[y] = temp;
+}
+
 
 void bubble_sort() {
-	if (bs.i < arr_size - bs.step - 1) {
-		float current = arr[bs.i];
-		float next = arr[bs.i + 1];
 
-		if (current > next) {
-			arr[bs.i + 1] = current;
-			arr[bs.i] = next;
+	/*
+	 * a: Index of the current selection
+	 * b: Index boundary of the sorted array
+	 */
+
+	if (as.a < arr_size - 1 - as.b) {
+		if (arr[as.a] > arr[as.a + 1]) {
+			swap_elements(as.a + 1, as.a);
 		}
 
-		bs.i++;
+		as.a++;
 	} else {
-		bs.step++;
-		bs.i = 0;
+		as.b++;
+		as.a = 0;
+	}
+}
+
+
+void selection_sort() {
+
+	/*
+	 * a: Index of current selection
+	 * b: Index of boundary of sorted array
+	 * c: Index of the minimum element
+	 */
+	
+
+	if (as.a < arr_size) {
+		if (arr[as.a] < arr[as.c]) {
+			
+			// Save new minimum
+			as.c = as.a;
+		}
+
+		as.a++;
+	} else {
+		swap_elements(as.b, as.c);
+
+		as.b++;
+		as.a = as.b;
+		as.c = as.a;
 	}
 }
 
@@ -115,6 +153,8 @@ void algo_selector(int direction) {
 		selected_algo = selection;
 	}
 }
+
+
 
 
 /* Render functions */
@@ -269,7 +309,7 @@ void keyboard(unsigned char key, int x, int y) {
 		run = false;
 
 		// Reset algo steps
-		bs = (struct BubbleSortInfo){0, 0};
+		as = (struct AlgoState){0, 0};
 	}
 	
 	// u: Increase speed
@@ -279,12 +319,19 @@ void keyboard(unsigned char key, int x, int y) {
 
 	// d: reduce speed
 	if (key == 100) {
-		speed--;
+		if (speed > 1) {
+			speed--;
+		}
 	}
 	
 	// enter: Run program
 	if (key == 13) {
 		run = true;
+	}
+
+	// p: Pause program
+	if (key == 112) {
+		run = false;
 	}
 
 	
@@ -353,6 +400,9 @@ int main(int argc, char** argv) {
 	strcpy(algos[0].name, "Bubble sort");
 	algos[0].function = &bubble_sort;
 
+	strcpy(algos[1].name, "Selection sort");
+	algos[1].function = &selection_sort;
+	
 	create_array();
 
 	glutInit(&argc, argv);
