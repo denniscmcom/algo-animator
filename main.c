@@ -8,31 +8,14 @@
 #include FT_FREETYPE_H
 
 
-#define WINDOW_HEIGHT 1080
 #define WINDOW_WIDTH 1920
+#define WINDOW_HEIGHT 1080
 #define VPADDING 150
 #define RECT_WIDTH 5
 #define SPACE 1
 
 
-/* Global variables */
-
-FT_Library ft_library;
-FT_Face ft_face;
-
-struct Algo {
-	char name[50];
-	void (*function)();
-};
-
-struct Algo algos[2];
-
-int selected_algo = 0;
-int speed = 1;
-int refresh_counter = 0;
-int iter_counter = 0;
-int arr_size;
-
+/* Helper functions */
 
 struct Element {
 	float value;
@@ -40,8 +23,69 @@ struct Element {
 };
 
 struct Element *arr;
+int arr_size;
 
-bool run;
+void create_array() {
+	arr_size = WINDOW_WIDTH / (RECT_WIDTH + SPACE);
+	arr = malloc(arr_size * sizeof(struct Element));
+
+	float rect_increase = (WINDOW_HEIGHT - VPADDING * 2) / (float)(arr_size - 1);
+
+	for (int i = 1; i <= arr_size; i++) {
+		arr[i - 1].value = i * rect_increase;
+		arr[i - 1].current = false;
+	}
+}
+
+
+void swap_elements(int x, int y) {
+	struct Element temp = arr[x];
+	arr[x] = arr[y];
+	arr[y] = temp;
+}
+
+
+void randomize_array() {
+	srand(time(NULL));
+
+	// Fisher-Yates shuffle
+	for (int i = arr_size - 1; i > 0; i--) {
+		int j = rand() % (i + 1);
+
+		// Swap
+		swap_elements(i, j);
+	}
+}
+
+
+bool array_sorted() {
+	for (int i = 0; i < arr_size - 1; i++) {
+		if (arr[i].value > arr[i + 1].value) {
+			return false;
+		}
+	}
+
+	return true;
+}
+
+
+struct Algo {
+	char name[50];
+	void (*function)();
+};
+
+struct Algo algos[2];
+int selected_algo = 0;
+
+void algo_selector(int direction) {
+	int selection = selected_algo + direction;
+	int lower = 0;
+	int upper = (sizeof(algos) / sizeof(algos[0])) - 1;
+
+	if (selection >= lower && selection <= upper) {
+		selected_algo = selection;
+	}
+}
 
 
 /* Algorithms */
@@ -53,13 +97,12 @@ struct AlgoState {
 	int c;
 };
 
-struct AlgoState as = {0, 0, 0};
+struct AlgoState as;
 
-
-void swap_elements(int x, int y) {
-	struct Element temp = arr[x];
-	arr[x] = arr[y];
-	arr[y] = temp;
+void reset_state() {
+	as.a = 0;
+	as.b = 0;
+	as.c = 0;
 }
 
 
@@ -92,13 +135,13 @@ void selection_sort() {
 	 * b: Index of boundary of sorted array
 	 * c: Index of the minimum element
 	 */
-	
+
 
 	if (as.a < arr_size) {
 		arr[as.a].current = true;
 
 		if (arr[as.a].value < arr[as.c].value) {
-			
+
 			// Save new minimum
 			as.c = as.a;
 		}
@@ -114,63 +157,29 @@ void selection_sort() {
 }
 
 
-/* Helper functions */
+void quick_sort() {
 
-void create_array() {
-	arr_size = WINDOW_WIDTH / (RECT_WIDTH + SPACE);
-	arr = malloc(arr_size * sizeof(struct Element));
-
-	float rect_increase = (WINDOW_HEIGHT - VPADDING * 2) / (float)(arr_size - 1);
-
-	for (int i = 1; i <= arr_size; i++) {
-		arr[i - 1].value = i * rect_increase;
-		arr[i - 1].current = false;
-	}
 }
 
 
-void randomize_array() {
-	srand(time(NULL));
+void insertion_sort() {
 
-	// Fisher-Yates shuffle
-	for (int i = arr_size - 1; i > 0; i--) {
-		int j = rand() % (i + 1);
-
-		// Swap
-		swap_elements(i, j);
-	}
 }
 
 
-bool array_sorted() {
-	for (int i = 0; i < arr_size - 1; i++) {
-		if (arr[i].value > arr[i + 1].value) {
-			return false;
-		}
-	}
+void merge_sort() {
 
-	return true;
 }
-
-
-void algo_selector(int direction) {
-	int selection = selected_algo + direction;
-	int lower = 0;
-	int upper = (sizeof(algos) / sizeof(algos[0])) - 1;
-
-	if (selection >= lower && selection <= upper) {
-		selected_algo = selection;
-	}
-}
-
-
 
 
 /* Render functions */
 
+FT_Library ft_library;
+FT_Face ft_face;
+
 void render_text(int x, int y, char* text) {
 	for (const char *c = text; *c; c++) {
-	
+
 		// Get glyph index from character code
 		FT_UInt glyph_index = FT_Get_Char_Index(ft_face, *c);
 
@@ -203,11 +212,11 @@ void render_text(int x, int y, char* text) {
 			memcpy(dest_row, src_row, glyph_bitmap->width);
 		}
 
-        glyph_bitmap->buffer = flipped_bitmap;
+		glyph_bitmap->buffer = flipped_bitmap;
 
-        // Calculate the adjusted y position based on the glyph's bearing
-        int adjusted_y = y + (slot->bitmap_top - glyph_bitmap->rows);
-	
+		// Calculate the adjusted y position based on the glyph's bearing
+		int adjusted_y = y + (slot->bitmap_top - glyph_bitmap->rows);
+
 		glRasterPos2f(x, adjusted_y);
 		glDrawPixels(glyph_bitmap->width, glyph_bitmap->rows, GL_LUMINANCE, GL_UNSIGNED_BYTE, glyph_bitmap->buffer);
 
@@ -216,6 +225,9 @@ void render_text(int x, int y, char* text) {
 }
 
 
+int speed = 50;
+int iter_counter = 0;
+
 void display() {
 	glClear(GL_COLOR_BUFFER_BIT);
 
@@ -223,7 +235,7 @@ void display() {
 
 	int x = 0;
 	for (int i = 0; i < arr_size; i++) {
-		
+
 		if (arr[i].current) {
 			glColor3f(1.0, 1.0, 1.0);
 		} else {
@@ -255,10 +267,10 @@ void display() {
 	// Top: Column 1
 	sprintf(text, "Algorithm: %s", algos[selected_algo].name);
 	render_text(20, WINDOW_HEIGHT - 50, text);
-	
+
 	sprintf(text, "Speed: %i", speed);
 	render_text(20, WINDOW_HEIGHT - 80, text);
-	
+
 	// Top: Column 2
 	sprintf(text, "Number of elements: %i", arr_size);
 	render_text(500, WINDOW_HEIGHT - 50, text);
@@ -274,12 +286,17 @@ void display() {
 
 	// Bottom: Column 2
 	render_text(800, VPADDING - 50, "Press enter to run the algorithm.");
+	render_text(800, VPADDING - 80, "Press p to pause the algorithm.");
 
 	glutSwapBuffers();
 }
 
 
 /* Refresh function */
+
+
+bool run;
+int refresh_counter = 0;
 
 void idle() {
 	if (run) {
@@ -326,9 +343,9 @@ void keyboard(unsigned char key, int x, int y) {
 		run = false;
 
 		// Reset algo steps
-		as = (struct AlgoState){0, 0};
+		reset_state();
 	}
-	
+
 	// u: Increase speed
 	if (key == 117) {
 		speed++;
@@ -340,7 +357,7 @@ void keyboard(unsigned char key, int x, int y) {
 			speed--;
 		}
 	}
-	
+
 	// enter: Run program
 	if (key == 13) {
 		run = true;
@@ -350,8 +367,6 @@ void keyboard(unsigned char key, int x, int y) {
 	if (key == 112) {
 		run = false;
 	}
-
-	
 }
 
 
@@ -419,7 +434,7 @@ int main(int argc, char** argv) {
 
 	strcpy(algos[1].name, "Selection sort");
 	algos[1].function = &selection_sort;
-	
+
 	create_array();
 
 	glutInit(&argc, argv);
@@ -438,7 +453,7 @@ int main(int argc, char** argv) {
 	free(arr);
 
 	FT_Done_Face(ft_face);
-    FT_Done_FreeType(ft_library);
+	FT_Done_FreeType(ft_library);
 
 	return 0;
 }
