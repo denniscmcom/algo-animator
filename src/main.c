@@ -1,181 +1,26 @@
-#include <stdio.h>
-#include <stdlib.h>
+#include "algorithms.h"
 #include <GL/glut.h>
-#include <math.h>
-#include <time.h>
-#include <stdbool.h>
+#include <pthread.h>
 #include <ft2build.h>
 #include FT_FREETYPE_H
 
 
-#define WINDOW_WIDTH 1920
-#define WINDOW_HEIGHT 1080
-#define VPADDING 150
-#define RECT_WIDTH 5
-#define SPACE 1
+int window_width = 1920;
+int window_height = 1080;
+int vpadding = 150;
+int rect_width = 5;
+int space = 1;
 
-
-/* Helper functions */
-
-struct Element {
-	float value;
-	bool current;
-};
-
-struct Element *arr;
-int arr_size;
-
-void create_array() {
-	arr_size = WINDOW_WIDTH / (RECT_WIDTH + SPACE);
-	arr = malloc(arr_size * sizeof(struct Element));
-
-	float rect_increase = (WINDOW_HEIGHT - VPADDING * 2) / (float)(arr_size - 1);
-
-	for (int i = 1; i <= arr_size; i++) {
-		arr[i - 1].value = i * rect_increase;
-		arr[i - 1].current = false;
-	}
-}
-
-
-void swap_elements(int x, int y) {
-	struct Element temp = arr[x];
-	arr[x] = arr[y];
-	arr[y] = temp;
-}
-
-
-void randomize_array() {
-	srand(time(NULL));
-
-	// Fisher-Yates shuffle
-	for (int i = arr_size - 1; i > 0; i--) {
-		int j = rand() % (i + 1);
-
-		// Swap
-		swap_elements(i, j);
-	}
-}
-
-
-bool array_sorted() {
-	for (int i = 0; i < arr_size - 1; i++) {
-		if (arr[i].value > arr[i + 1].value) {
-			return false;
-		}
-	}
-
-	return true;
-}
-
-
-struct Algo {
-	char name[50];
-	void (*function)();
-};
-
-struct Algo algos[2];
+struct Algo algos[1];
 int selected_algo = 0;
 
-void algo_selector(int direction) {
-	int selection = selected_algo + direction;
-	int lower = 0;
-	int upper = (sizeof(algos) / sizeof(algos[0])) - 1;
-
-	if (selection >= lower && selection <= upper) {
-		selected_algo = selection;
-	}
-}
-
-
-/* Algorithms */
-
-// Just some variables to store the state of the running algorithm
-struct AlgoState {
-	int a;
-	int b;
-	int c;
-};
-
-struct AlgoState as;
-
-void reset_state() {
-	as.a = 0;
-	as.b = 0;
-	as.c = 0;
-}
-
-
-void bubble_sort() {
-
-	/*
-	 * a: Index of the current selection
-	 * b: Index boundary of the sorted array
-	 */
-
-	if (as.a < arr_size - 1 - as.b) {
-		arr[as.a].current = true;
-
-		if (arr[as.a].value > arr[as.a + 1].value) {
-			swap_elements(as.a + 1, as.a);
-		}
-
-		as.a++;
-	} else {
-		as.b++;
-		as.a = 0;
-	}
-}
-
-
-void selection_sort() {
-
-	/*
-	 * a: Index of current selection
-	 * b: Index of boundary of sorted array
-	 * c: Index of the minimum element
-	 */
-
-
-	if (as.a < arr_size) {
-		arr[as.a].current = true;
-
-		if (arr[as.a].value < arr[as.c].value) {
-
-			// Save new minimum
-			as.c = as.a;
-		}
-
-		as.a++;
-	} else {
-		swap_elements(as.b, as.c);
-
-		as.b++;
-		as.a = as.b;
-		as.c = as.a;
-	}
-}
-
-
-void quick_sort() {
-
-}
-
-
-void insertion_sort() {
-
-}
-
-
-void merge_sort() {
-
-}
-
-
-/* Render functions */
+struct AlgoArgs algo_args;
 
 FT_Library ft_library;
 FT_Face ft_face;
+
+pthread_t thread_id;
+
 
 void render_text(int x, int y, char* text) {
 	for (const char *c = text; *c; c++) {
@@ -225,38 +70,35 @@ void render_text(int x, int y, char* text) {
 }
 
 
-int speed = 50;
-int iter_counter = 0;
-
 void display() {
 	glClear(GL_COLOR_BUFFER_BIT);
 
 	glBegin(GL_QUADS);
 
 	int x = 0;
-	for (int i = 0; i < arr_size; i++) {
+	for (int i = 0; i < algo_args.arr_size; i++) {
 
-		if (arr[i].current) {
+		if (algo_args.arr[i].current) {
 			glColor3f(1.0, 1.0, 1.0);
 		} else {
 			glColor3f(1.0, 0.7569, 0.0);
 		}
 
 		// Bottom left
-		glVertex2f(x, VPADDING);
+		glVertex2f(x, vpadding);
 
 		// Top left
-		glVertex2f(x, VPADDING + arr[i].value);
+		glVertex2f(x, vpadding + algo_args.arr[i].value);
 
 		// Top right
-		glVertex2f(x + RECT_WIDTH, VPADDING + arr[i].value);
+		glVertex2f(x + rect_width, vpadding + algo_args.arr[i].value);
 
 		// Bottom right
-		glVertex2f(x + RECT_WIDTH, VPADDING);
+		glVertex2f(x + rect_width, vpadding);
 
-		x += RECT_WIDTH + SPACE;
+		x += rect_width + space;
 
-		arr[i].current = false;
+		algo_args.arr[i].current = false;
 	}
 
 	glEnd();
@@ -266,111 +108,76 @@ void display() {
 
 	// Top: Column 1
 	sprintf(text, "Algorithm: %s", algos[selected_algo].name);
-	render_text(20, WINDOW_HEIGHT - 50, text);
+	render_text(20, window_height - 50, text);
 
-	sprintf(text, "Speed: %i", speed);
-	render_text(20, WINDOW_HEIGHT - 80, text);
+	sprintf(text, "Delay: %u microseconds", algo_args.delay);
+	render_text(20, window_height - 80, text);
 
 	// Top: Column 2
-	sprintf(text, "Number of elements: %i", arr_size);
-	render_text(500, WINDOW_HEIGHT - 50, text);
+	sprintf(text, "Number of elements: %i", algo_args.arr_size);
+	render_text(500, window_height - 50, text);
 
-	sprintf(text, "Iterations: %i", iter_counter);
-	render_text(500, WINDOW_HEIGHT - 80, text);
-
+	sprintf(text, "Comparisons: %i", algo_args.comparisons);
+	render_text(500, window_height - 80, text);
 
 	// Bottom: Column 1
-	render_text(20, VPADDING - 50, "Press a or s to select an algorithm.");
-	render_text(20, VPADDING - 80, "Press u or d to modify speed.");
-	render_text(20, VPADDING - 110, "Press r to randomize the array.");
+	render_text(20, vpadding - 50, "Press a or s to select an algorithm.");
+	render_text(20, vpadding - 80, "Press u or d to modify speed.");
+	render_text(20, vpadding - 110, "Press r to randomize the array.");
 
 	// Bottom: Column 2
-	render_text(800, VPADDING - 50, "Press enter to run the algorithm.");
-	render_text(800, VPADDING - 80, "Press p to pause the algorithm.");
+	render_text(800, vpadding - 50, "Press enter to run the algorithm.");
+	render_text(800, vpadding - 80, "Press p to pause the algorithm.");
 
 	glutSwapBuffers();
 }
 
 
-/* Refresh function */
-
-
-bool run;
-int refresh_counter = 0;
-
 void idle() {
-	if (run) {
-		algos[selected_algo].function();
-		refresh_counter++;
-		iter_counter++;
-
-		if (refresh_counter == speed) {
-			glutPostRedisplay();
-			refresh_counter = 0;
-		}
-
-	} else {
-		glutPostRedisplay();
-	}
-
-	if (array_sorted()) {
-		run = false;
-	}
+	glutPostRedisplay();	
 }
 
-
-/* User input handler */
 
 void keyboard(unsigned char key, int x, int y) {
 
 	// s: Next algorithm
 	if (key == 115) {
-		algo_selector(1);
+
 	}
 
 	// a: Previous algorithm
 	if (key == 97) {
-		algo_selector(-1);
+
 	}
 
 	// r: Reset state
 	if (key == 114) {
-		randomize_array();
-
-		// Reset state
-		iter_counter = 0;
-		refresh_counter = 0;
-		run = false;
-
-		// Reset algo steps
-		reset_state();
+		randomize_array(algo_args.arr, algo_args.arr_size);
 	}
 
 	// u: Increase speed
 	if (key == 117) {
-		speed++;
+		algo_args.delay += 10;
 	}
 
 	// d: reduce speed
 	if (key == 100) {
-		if (speed > 1) {
-			speed--;
+		if (algo_args.delay > 10) {
+			algo_args.delay -= 10;
 		}
 	}
 
 	// enter: Run program
 	if (key == 13) {
-		run = true;
+		pthread_create(&thread_id, NULL, algos[selected_algo].function, (void *)&algo_args);
 	}
 
 	// p: Pause program
 	if (key == 112) {
-		run = false;
+
 	}
 }
 
-
-/* Set up functions */
 
 void setup_gl() {
 
@@ -385,15 +192,15 @@ void setup_gl() {
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 
-	/* 
+	/*
 	 * Creates projection matrix
 	 * x increases from left to right (0 to WINDOW_WIDTH)
 	 * y increases from bottom to top (0 to WINDOW_HEIGHT)
 	 */
 
-	gluOrtho2D(0, WINDOW_WIDTH, 0, WINDOW_HEIGHT);
+	gluOrtho2D(0, window_width, 0, window_height);
 
-	/* 
+	/*
 	 * This fucking line... I spent a day rendering weird symbols
 	 * because the padding that adds FreeType to each row of the bitmap
 	 * does not match the padding expected by GL.
@@ -429,17 +236,21 @@ void setup_freetype() {
 
 
 int main(int argc, char** argv) {
+	algo_args.comparisons = 0;
+	algo_args.delay = 100;
+
 	strcpy(algos[0].name, "Bubble sort");
-	algos[0].function = &bubble_sort;
+	algos[0].function = bubble_sort;
 
-	strcpy(algos[1].name, "Selection sort");
-	algos[1].function = &selection_sort;
+	algo_args.arr_size = window_width / (rect_width + space);
+	algo_args.arr = malloc(algo_args.arr_size * sizeof(struct Element));
 
-	create_array();
+	create_array(algo_args.arr, algo_args.arr_size, window_height, vpadding);
+	randomize_array(algo_args.arr, algo_args.arr_size);
 
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
-	glutInitWindowSize(WINDOW_WIDTH, WINDOW_HEIGHT);
+	glutInitWindowSize(window_width, window_height);
 	glutCreateWindow("Algorithm animator");
 
 	setup_gl();
@@ -450,7 +261,7 @@ int main(int argc, char** argv) {
 	glutIdleFunc(idle);
 	glutMainLoop();
 
-	free(arr);
+	free(algo_args.arr);
 
 	FT_Done_Face(ft_face);
 	FT_Done_FreeType(ft_library);

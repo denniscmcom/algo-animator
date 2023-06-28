@@ -1,12 +1,17 @@
 cmake_minimum_required(VERSION 3.22)
 project(algo_animator)
 
-set(SOURCES src/main.c)
 set(FREETYPE_DIR /usr/local/include/freetype2)
 
 include_directories(${FREETYPE_DIR})
 
-add_executable(algo_animator ${SOURCES})
+add_executable(algo_animator 
+	src/main.c
+	src/algorithms.c
+	src/algorithms.h
+	src/utils.c
+	src/utils.h
+)
 
 target_link_libraries(algo_animator
     glut
