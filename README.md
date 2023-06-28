@@ -8,8 +8,13 @@ This project is inspired by - off course - the video by Timo Bingmann called [15
 ## Compile
 
 ```bash
-gcc main.c -lglut -lGL -lGLU -lm -I/usr/local/include/freetype2 -L/usr/local/lib -lfreetype
+mkdir build
+cd build
+cmake ..
+make
+./algo_animator
 ```
+
 
 ## To improve
 
