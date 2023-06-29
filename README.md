@@ -18,11 +18,11 @@ cmake ..
 make
 ```
 
-**Currently I've only tested this project on Linux. However, I would like to prepare it so 
+*Currently I've only tested this project on Linux. However, I would like to prepare it so 
 that it can be used on Mac and Windows. However, my cross-platform experience is almost 
-non-existent. Maybe in the future I'll check how to do it**
+non-existent. Maybe in the future I'll check how to do it*
 
-# Run
+## Run
 
 To customize the program you can pass the following arguments. 
 
@@ -50,21 +50,21 @@ rectangles of 3 pixels.
 ![Image 3](repo/3.png)
 
 
-# Examples
+## Examples
 
-## Normal mode
+### Normal mode
 
 Just run the program and press `ENTER`
 
-## Slow motion
+### Slow motion
 
 Use `u` to increase the delay, then `ENTER` to run the algorithm   
-**The delay is applied after each iteration**
+*The delay is applied after each iteration*
 
-## Pause mode
+### Pause mode
 
 Press `ENTER` then `p`
 
-## Sequential mode
+### Sequential mode
 
 Press `q` then press `ENTER` to visualize the algorithm step by step.
