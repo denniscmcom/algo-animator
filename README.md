@@ -55,6 +55,7 @@ rectangles of 3 pixels.
 ### Normal mode
 
 Just run the program and press `ENTER`
+[Screencast from 06-29-2023 07:36:54 PM.webm](https://github.com/denniscmartin/algo-animator/assets/66180929/10e359c2-364c-4de4-9d7c-94caa582638c)
 
 ### Slow motion
 
