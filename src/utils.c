@@ -30,32 +30,63 @@ void randomize_array(struct Element *arr, int arr_size) {
 }
 
 
-bool array_sorted(struct Element *arr, int arr_size) {
-	for (int i = 0; i < arr_size - 1; i++) {
-		if (arr[i].value > arr[i + 1].value) {
-			return false;
-		}
-	}
+void algorithm_selector(struct Algo *algos, int size, int direction, int *selected_algo) {
+	int selection = *selected_algo + direction;
 
-	return true;
-}
-
-
-void algorithm_selector(struct Algo *algos, int direction, int *selected_algorithm) {
-	int selection = *selected_algorithm + direction;
-	int lower = 0;
-	int upper = (int)((sizeof(algos) / sizeof(algos[0])) - 1);
-
-	if (selection >= lower && selection <= upper) {
-		*selected_algorithm = selection;
+	if (selection >= 0 && selection <= size - 1) {
+		*selected_algo = selection;
 	}
 }
 
 
-void delay_flow(useconds_t *delay, bool *pause) {
+void change_speed(struct AlgoArgs *algo_args, int change) {
+	int new_delay = algo_args->delay + change;
+
+	if (new_delay) {
+		algo_args->delay = new_delay;
+	}
+}
+
+
+void control_flow(useconds_t delay, bool sequentially, bool *pause) {
+	if (sequentially) {
+		*pause = true;
+	}
+
 	while (*pause) {
 		// Wait to resume
 	}
-	
-	usleep(*delay);
+
+	usleep(delay);
 }
+
+
+void reset_state(struct AlgoArgs *algo_args, struct ThreadState *thread_state) {
+	if (thread_state->running) {
+		pthread_cancel(thread_state->thread);
+	}
+
+	randomize_array(algo_args->arr, algo_args->arr_size);
+
+	algo_args->comparisons = 0;
+	algo_args->pause = false;
+	algo_args->sequentially = false;
+
+	for (int i = 0; i < algo_args->arr_size - 1; i++) {
+		algo_args->arr[i].current = false;
+	}
+}
+
+
+void run(struct AlgoArgs *algo_args, struct Algo *algos, int selected_algo, 
+		struct ThreadState *thread_state) {
+
+	if (algo_args->pause) {
+		algo_args->pause = false;
+	} else {
+		thread_state->running = true;
+		pthread_create(&(thread_state->thread), NULL, algos[selected_algo].function, 
+				(void *)algo_args);
+	}
+}
+

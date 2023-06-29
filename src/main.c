@@ -1,25 +1,21 @@
 #include "algorithms.h"
-#include <GL/glut.h>
-#include <pthread.h>
-#include <ft2build.h>
-#include FT_FREETYPE_H
 
 
 int window_width = 1920;
 int window_height = 1080;
 int vpadding = 150;
-int rect_width = 5;
+int rect_width = 30;
 int space = 1;
 
-struct Algo algos[1];
+struct Algo algos[2];
 int selected_algo = 0;
+int algos_size;
 
 struct AlgoArgs algo_args;
+struct ThreadState thread_state;
 
 FT_Library ft_library;
 FT_Face ft_face;
-
-pthread_t thread_id;
 
 
 void render_text(int x, int y, char* text) {
@@ -49,11 +45,14 @@ void render_text(int x, int y, char* text) {
 		FT_Bitmap* glyph_bitmap = &slot->bitmap;
 
 		// Flip the bitmap vertically
-		unsigned char* flipped_bitmap = (unsigned char*)malloc(glyph_bitmap->width * glyph_bitmap->rows);
+		unsigned char* flipped_bitmap = (unsigned char*)malloc(
+				glyph_bitmap->width * glyph_bitmap->rows);
 
 		for (int row = 0; row < glyph_bitmap->rows; row++) {
 			unsigned char* src_row = glyph_bitmap->buffer + (row * glyph_bitmap->width);
-			unsigned char* dest_row = flipped_bitmap + ((glyph_bitmap->rows - row - 1) * glyph_bitmap->width);
+			unsigned char* dest_row = flipped_bitmap + ((glyph_bitmap->rows - row - 1) * 
+					glyph_bitmap->width);
+
 			memcpy(dest_row, src_row, glyph_bitmap->width);
 		}
 
@@ -63,7 +62,8 @@ void render_text(int x, int y, char* text) {
 		int adjusted_y = y + (slot->bitmap_top - glyph_bitmap->rows);
 
 		glRasterPos2f(x, adjusted_y);
-		glDrawPixels(glyph_bitmap->width, glyph_bitmap->rows, GL_LUMINANCE, GL_UNSIGNED_BYTE, glyph_bitmap->buffer);
+		glDrawPixels(glyph_bitmap->width, glyph_bitmap->rows, GL_LUMINANCE, 
+				GL_UNSIGNED_BYTE, glyph_bitmap->buffer);
 
 		x += slot->advance.x / 64;
 	}
@@ -76,7 +76,7 @@ void display() {
 	glBegin(GL_QUADS);
 
 	int x = 0;
-	for (int i = 0; i < algo_args.arr_size; i++) {
+	for (int i = 0; i < algo_args.arr_size - 1; i++) {
 
 		if (algo_args.arr[i].current) {
 			glColor3f(1.0, 1.0, 1.0);
@@ -97,8 +97,6 @@ void display() {
 		glVertex2f(x + rect_width, vpadding);
 
 		x += rect_width + space;
-
-		algo_args.arr[i].current = false;
 	}
 
 	glEnd();
@@ -120,6 +118,17 @@ void display() {
 	sprintf(text, "Comparisons: %i", algo_args.comparisons);
 	render_text(500, window_height - 80, text);
 
+	// Top: Column 3
+	if (algo_args.pause && !algo_args.sequentially) {
+		sprintf(text, "PAUSED");
+		render_text(window_width - 400, window_height - 50, text);
+	}
+
+	if (algo_args.sequentially) {
+		sprintf(text, "SEQUENTIAL MODE");
+		render_text(window_width - 400, window_height - 80, text);
+	}
+
 	// Bottom: Column 1
 	render_text(20, vpadding - 50, "Press a or s to select an algorithm.");
 	render_text(20, vpadding - 80, "Press u or d to modify speed.");
@@ -128,6 +137,7 @@ void display() {
 	// Bottom: Column 2
 	render_text(800, vpadding - 50, "Press enter to run the algorithm.");
 	render_text(800, vpadding - 80, "Press p to pause the algorithm.");
+	render_text(800, vpadding - 110, "Press q to enable or disable sequential mode.");
 
 	glutSwapBuffers();
 }
@@ -142,39 +152,42 @@ void keyboard(unsigned char key, int x, int y) {
 
 	// s: Next algorithm
 	if (key == 115) {
-
+		algorithm_selector(algos, algos_size, 1, &selected_algo);
 	}
 
 	// a: Previous algorithm
 	if (key == 97) {
-
+		algorithm_selector(algos, algos_size, -1, &selected_algo);
 	}
 
 	// r: Reset state
 	if (key == 114) {
-		randomize_array(algo_args.arr, algo_args.arr_size);
+		reset_state(&algo_args, &thread_state);
 	}
 
 	// u: Increase speed
 	if (key == 117) {
-		algo_args.delay += 10;
+		change_speed(&algo_args, 10);
 	}
 
 	// d: reduce speed
 	if (key == 100) {
-		if (algo_args.delay > 10) {
-			algo_args.delay -= 10;
-		}
+		change_speed(&algo_args, -10);
 	}
 
 	// enter: Run program
 	if (key == 13) {
-		pthread_create(&thread_id, NULL, algos[selected_algo].function, (void *)&algo_args);
+		run(&algo_args, algos, selected_algo, &thread_state);
 	}
 
 	// p: Pause program
 	if (key == 112) {
+		algo_args.pause = true;
+	}
 
+	// q: Enable sequential mode
+	if (key == 113) {
+		algo_args.sequentially = !algo_args.sequentially;
 	}
 }
 
@@ -236,14 +249,20 @@ void setup_freetype() {
 
 
 int main(int argc, char** argv) {
+	algo_args.arr_size = window_width / (rect_width + space);
+	algo_args.arr = malloc(algo_args.arr_size * sizeof(struct Element));
 	algo_args.comparisons = 0;
+	algo_args.pause = false;
+	algo_args.sequentially = false;
 	algo_args.delay = 100;
 
 	strcpy(algos[0].name, "Bubble sort");
 	algos[0].function = bubble_sort;
+	
+	strcpy(algos[1].name, "Selection sort");
+	algos[1].function = selection_sort;
 
-	algo_args.arr_size = window_width / (rect_width + space);
-	algo_args.arr = malloc(algo_args.arr_size * sizeof(struct Element));
+	algos_size = sizeof(algos) / sizeof(algos[0]);
 
 	create_array(algo_args.arr, algo_args.arr_size, window_height, vpadding);
 	randomize_array(algo_args.arr, algo_args.arr_size);
