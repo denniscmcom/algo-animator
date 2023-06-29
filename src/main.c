@@ -131,12 +131,12 @@ void display() {
 
 	// Bottom: Column 1
 	render_text(20, vpadding - 50, "Press a or s to select an algorithm.");
-	render_text(20, vpadding - 80, "Press u or d to modify speed.");
-	render_text(20, vpadding - 110, "Press r to randomize the array.");
+	render_text(20, vpadding - 80, "Press u or d to change the delay.");
+	render_text(20, vpadding - 110, "Press r to reset.");
 
 	// Bottom: Column 2
-	render_text(800, vpadding - 50, "Press enter to run the algorithm.");
-	render_text(800, vpadding - 80, "Press p to pause the algorithm.");
+	render_text(800, vpadding - 50, "Press enter to run or resume the algorithm.");
+	render_text(800, vpadding - 80, "Press p to pause.");
 	render_text(800, vpadding - 110, "Press q to enable or disable sequential mode.");
 
 	glutSwapBuffers();
@@ -167,12 +167,12 @@ void keyboard(unsigned char key, int x, int y) {
 
 	// u: Increase speed
 	if (key == 117) {
-		change_speed(&algo_args, 10);
+		change_delay(&algo_args, 10);
 	}
 
 	// d: reduce speed
 	if (key == 100) {
-		change_speed(&algo_args, -10);
+		change_delay(&algo_args, -10);
 	}
 
 	// enter: Run program

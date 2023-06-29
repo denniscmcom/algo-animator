@@ -39,7 +39,7 @@ void algorithm_selector(struct Algo *algos, int size, int direction, int *select
 }
 
 
-void change_speed(struct AlgoArgs *algo_args, int change) {
+void change_delay(struct AlgoArgs *algo_args, int change) {
 	int new_delay = algo_args->delay + change;
 
 	if (new_delay) {
