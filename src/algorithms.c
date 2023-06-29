@@ -42,12 +42,16 @@ void *selection_sort(void *arguments) {
 		for (int i = step + 1; i < args->arr_size; i++) {
 			args->comparisons++;
 			args->arr[i].current = true;
+			args->arr[min_idx].current = true;
+
+			control_flow(args->delay, args->sequentially, &args->pause);
+			args->arr[i].current = false;
+			args->arr[min_idx].current = false;
 
 			if (args->arr[i].value < args->arr[min_idx].value) {
 				min_idx = i;
 			}
 
-			control_flow(args->delay, args->sequentially, &args->pause);
 		}
 
 		swap_elements(min_idx, step, args->arr);

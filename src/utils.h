@@ -43,7 +43,7 @@ void swap_elements(int x, int y, struct Element *arr);
 void randomize_array(struct Element *arr, int arr_size);
 bool array_sorted(struct Element *arr, int arr_size);
 void algorithm_selector(struct Algo *algos, int algos_size, int direction, int *selected_algo);
-void change_speed(struct AlgoArgs *algo_args, int change);
+void change_delay(struct AlgoArgs *algo_args, int change);
 void control_flow(useconds_t delay, bool sequentially, bool *pause);
 void reset_state(struct AlgoArgs *algo_args, struct ThreadState *thread_state);
 void run(struct AlgoArgs *algo_args, struct Algo *algos, int selected_algo, 
