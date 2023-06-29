@@ -61,15 +61,15 @@ Just run the program and press `ENTER`
 
 Use `u` to increase the delay, then `ENTER` to run the algorithm   
 *The delay is applied after each iteration*  
-[slow_motion.webm](https://github.com/denniscmartin/algo-animator/assets/66180929/b3bcde87-2680-4667-98be-3b3946712254)
+[Video.webm](https://github.com/denniscmartin/algo-animator/assets/66180929/b3bcde87-2680-4667-98be-3b3946712254)
 
 ### Pause mode
 
 Press `ENTER` then `p`   
-[pause_mode.webm](https://github.com/denniscmartin/algo-animator/assets/66180929/6a3ff80c-56dc-4b1a-a811-e3649fe2edde)
+[Video.webm](https://github.com/denniscmartin/algo-animator/assets/66180929/6a3ff80c-56dc-4b1a-a811-e3649fe2edde)
 
 ### Sequential mode
 
 Press `q` then press `ENTER` to visualize the algorithm step by step.   
-[sequential_mode.webm](https://github.com/denniscmartin/algo-animator/assets/66180929/743c00d8-5236-437d-85ad-b139611175ef)
+[Video.webm](https://github.com/denniscmartin/algo-animator/assets/66180929/743c00d8-5236-437d-85ad-b139611175ef)
 
