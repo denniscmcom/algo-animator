@@ -4,7 +4,7 @@
 int window_width = 1920;
 int window_height = 1080;
 int vpadding = 150;
-int rect_width = 30;
+int rect_width = 5;
 int space = 1;
 
 struct Algo algos[2];
@@ -248,7 +248,49 @@ void setup_freetype() {
 }
 
 
-int main(int argc, char** argv) {
+int main(int argc, char *argv[]) {
+	if (argc - 1 == 4) {
+		int args[4];
+
+		printf("Values provided: ");	
+		
+		for (int i = 1; i < argc; i++) {
+			printf("%s ", argv[i]);
+
+			char* end_ptr;
+			long value = strtol(argv[i], &end_ptr, 10);
+
+			if (end_ptr == argv[i]) {
+				printf("Invalid argument\n");
+				exit(1);
+			}
+
+			if ((value == LONG_MAX || value == LONG_MIN)) {
+				printf("Integer out of range\n");
+				exit(1);
+			}
+
+			args[i - 1] = (int)value;
+		}
+
+		printf("\n");
+
+		printf("Window width: %i\n", args[0]);
+		window_width = args[0];
+
+		printf("Window height: %i\n", args[1]);
+		window_height = args[1];
+
+		printf("Rectangle width: %i\n", args[2]);
+		rect_width = args[2];
+
+		printf("Space: %i\n", args[3]);
+		space = args[3];
+
+	} else {
+		printf("Using default values\n");
+	}
+
 	algo_args.arr_size = window_width / (rect_width + space);
 	algo_args.arr = malloc(algo_args.arr_size * sizeof(struct Element));
 	algo_args.comparisons = 0;
@@ -258,7 +300,7 @@ int main(int argc, char** argv) {
 
 	strcpy(algos[0].name, "Bubble sort");
 	algos[0].function = bubble_sort;
-	
+
 	strcpy(algos[1].name, "Selection sort");
 	algos[1].function = selection_sort;
 
@@ -270,7 +312,7 @@ int main(int argc, char** argv) {
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
 	glutInitWindowSize(window_width, window_height);
-	glutCreateWindow("Algorithm animator");
+	glutCreateWindow("Visualization of sorting algorithms | Developed by Dennis CM");
 
 	setup_gl();
 	setup_freetype();
