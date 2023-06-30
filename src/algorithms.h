@@ -6,6 +6,8 @@
 
 void *bubble_sort(void *arguments);
 void *selection_sort(void *arguments);
+void *quick_sort(void *arguments);
+void *insertion_sort(void *arguments);
 
 
 #endif // ALGORITHMS_H
