@@ -73,3 +73,6 @@ Press `ENTER` then `p`
 Press `q` then press `ENTER` to visualize the algorithm step by step.   
 [Video.webm](https://github.com/denniscmartin/algo-animator/assets/66180929/743c00d8-5236-437d-85ad-b139611175ef)
 
+## Notes
+
+This project has not been designed to compare the speed of the algorithms side by side. The main objective is the visualization of the algorithms for educational purposes.

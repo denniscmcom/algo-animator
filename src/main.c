@@ -7,7 +7,7 @@ int vpadding = 150;
 int rect_width = 5;
 int space = 1;
 
-struct Algo algos[2];
+struct Algo algos[4];
 int selected_algo = 0;
 int algos_size;
 
@@ -76,7 +76,7 @@ void display() {
 	glBegin(GL_QUADS);
 
 	int x = 0;
-	for (int i = 0; i < algo_args.arr_size - 1; i++) {
+	for (int i = 0; i < algo_args.arr_size; i++) {
 
 		if (algo_args.arr[i].current) {
 			glColor3f(1.0, 1.0, 1.0);
@@ -304,6 +304,12 @@ int main(int argc, char *argv[]) {
 	strcpy(algos[1].name, "Selection sort");
 	algos[1].function = selection_sort;
 
+	strcpy(algos[2].name, "Quick sort");
+	algos[2].function = quick_sort;
+
+	strcpy(algos[3].name, "Insertion sort");
+	algos[3].function = insertion_sort;
+	
 	algos_size = sizeof(algos) / sizeof(algos[0]);
 
 	create_array(algo_args.arr, algo_args.arr_size, window_height, vpadding);
