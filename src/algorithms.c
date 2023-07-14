@@ -59,7 +59,7 @@ void *selection_sort(void *arguments) {
 }
 
 
-/* Quick sort */
+/* Quick sort (no recursion) */
 
 int qs_partition(struct AlgoArgs *args, int left, int right) {
 	printf("Pivot index: %i\n", right);
@@ -180,8 +180,8 @@ void *insertion_sort(void *arguments) {
 }
 
 
-/* Merge sort */
-
+/* Merge sort (PENDING) */
+  
 void *merge_sort(void *arguments) {
 	struct AlgoArgs *args = (struct AlgoArgs *)arguments;
 }

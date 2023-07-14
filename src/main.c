@@ -165,12 +165,12 @@ void keyboard(unsigned char key, int x, int y) {
 		reset_state(&algo_args, &thread_state);
 	}
 
-	// u: Increase speed
+	// u: Increase delay
 	if (key == 117) {
 		change_delay(&algo_args, 10);
 	}
 
-	// d: reduce speed
+	// d: reduce delay
 	if (key == 100) {
 		change_delay(&algo_args, -10);
 	}
@@ -197,7 +197,7 @@ void setup_gl() {
 	// Set background dark
 	glClearColor(0.0, 0.0, 0.0, 1.0);
 
-	// Set point color and size to 1 pixel
+	// Set point color and size
 	glColor3f(1.0, 0.7569, 0.0);
 	glPointSize(5.0);
 
@@ -318,7 +318,7 @@ int main(int argc, char *argv[]) {
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
 	glutInitWindowSize(window_width, window_height);
-	glutCreateWindow("Visualization of sorting algorithms | Developed by Dennis CM");
+	glutCreateWindow("Visualization of sorting algorithms");
 
 	setup_gl();
 	setup_freetype();
