@@ -1,6 +1,7 @@
 # algo-animator
 
-An interactive program to visualize sorting algorithms.
+An interactive program to visualize sorting algorithms.  
+I also made a video about this project [Youtube](https://youtu.be/KvOI88s-FsU)
 
 This project is inspired by - off course - the video by Timo Bingmann called 
 [15 sorting algorithms in 6 minutes](https://www.youtube.com/watch?v=kPRA0W1kECg).
