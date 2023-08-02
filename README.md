@@ -6,9 +6,8 @@ I also made a video about this project [Youtube](https://youtu.be/KvOI88s-FsU)
 This project is inspired by - off course - the video by Timo Bingmann called 
 [15 sorting algorithms in 6 minutes](https://www.youtube.com/watch?v=kPRA0W1kECg).
 
-![Image 1](repo/1.png)
-![Image 2](repo/2.png)
-
+![1](https://github.com/denniscmartin/algo-animator/assets/66180929/cf3396f6-2e66-4949-b7bd-2ba0ac4b8529)
+![2](https://github.com/denniscmartin/algo-animator/assets/66180929/14b4fe88-489e-4dcd-af3c-faa1f941ed9b)
 
 ## Compile
 
