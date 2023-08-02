@@ -47,9 +47,6 @@ rectangles of 3 pixels.
 ./algo_animator 1920 1080 50 3
 ```
 
-![Image 3](repo/3.png)
-
-
 ## Examples
 
 ### Normal mode
