@@ -1,3 +1,23 @@
+* README
+:PROPERTIES:
+:EXPORT_FILE_NAME: README.txt
+:END:
+
+** algo-animator
+
+An interactive program to visualize sorting algorithms. Developed in C using OpenGL, GLUT, and FreeType.
+
+- Docs: [[https://denniscm.com/projects/algo-animator]]
+- Main repo on SourceHut: [[https://git.sr.ht/~denniscmartin/algo-animator]]
+  - Mirrors:
+    - Github: [[https://github.com/denniscmartin/algo-animator]]
+    - Gitlab: [[https://gitlab.com/denniscmartin/algo-animator]]
+
+* LICENSE
+:PROPERTIES:
+:EXPORT_FILE_NAME: LICENSE.txt
+:END:
+
 MIT License
 
 Copyright (c) 2023 Dennis
@@ -19,3 +39,4 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
