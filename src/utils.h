@@ -6,7 +6,7 @@
 #include <time.h>
 #include <stdbool.h>
 #include <unistd.h>
-#include <GL/glut.h>
+#include <GLUT/glut.h>
 #include <pthread.h>
 #include <ft2build.h>
 #include <signal.h>
