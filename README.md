@@ -5,6 +5,9 @@ An interactive program to visualize sorting algorithms. Developed in C using Ope
 
 This project is inspired by the video of Timo Bingmann called [15 sorting algorithms in 6 minutes](https://www.youtube.com/watch?v=kPRA0W1kECg)
 
+![alt text](.github/1.png)
+![alt text](.github/2.png)
+
 ## Usage
 
 ### Compile
