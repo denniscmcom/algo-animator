@@ -1,4 +1,6 @@
 #include "algorithms.h"
+#define GL_SILENCE_DEPRECATION
+
 
 
 int window_width = 1920;
