@@ -183,5 +183,62 @@ void *insertion_sort(void *arguments) {
 /* Merge sort (PENDING) */
   
 void *merge_sort(void *arguments) {
-	struct AlgoArgs *args = (struct AlgoArgs *)arguments;
+    struct AlgoArgs *args = (struct AlgoArgs *)arguments;
+    int n = args->arr_size;
+    struct Element *temp = malloc(n * sizeof(struct Element));
+    if (!temp) return NULL;
+
+    for (int curr_size = 1; curr_size < n; curr_size *= 2) {
+        for (int left_start = 0; left_start < n; left_start += 2 * curr_size) {
+            int mid = left_start + curr_size - 1;
+            if (mid >= n) mid = n - 1;
+            int right_end = left_start + 2 * curr_size - 1;
+            if (right_end >= n) right_end = n - 1;
+
+            int i = left_start;
+            int j = mid + 1;
+            int k = left_start;
+
+            while (i <= mid && j <= right_end) {
+                args->comparisons++;
+                args->arr[i].current = true;
+                args->arr[j].current = true;
+
+                control_flow(args->delay, args->sequentially, &args->pause);
+
+                if (args->arr[i].value <= args->arr[j].value) {
+                    temp[k++] = args->arr[i++];
+                } else {
+                    temp[k++] = args->arr[j++];
+                }
+
+                args->arr[i-1].current = false;
+                args->arr[j-1].current = false;
+            }
+
+            while (i <= mid) {
+                temp[k++] = args->arr[i];
+                args->arr[i].current = true;
+                control_flow(args->delay, args->sequentially, &args->pause);
+                args->arr[i++].current = false;
+            }
+
+            while (j <= right_end) {
+                temp[k++] = args->arr[j];
+                args->arr[j].current = true;
+                control_flow(args->delay, args->sequentially, &args->pause);
+                args->arr[j++].current = false;
+            }
+
+            for (int k = left_start; k <= right_end; k++) {
+                args->arr[k] = temp[k];
+                args->arr[k].current = true;
+                control_flow(args->delay, args->sequentially, &args->pause);
+                args->arr[k].current = false;
+            }
+        }
+    }
+
+    free(temp);
+    return NULL;
 }
