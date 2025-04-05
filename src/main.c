@@ -1,4 +1,6 @@
 #include "algorithms.h"
+#define GL_SILENCE_DEPRECATION
+
 
 
 int window_width = 1920;
@@ -7,7 +9,7 @@ int vpadding = 150;
 int rect_width = 5;
 int space = 1;
 
-struct Algo algos[4];
+struct Algo algos[5];
 int selected_algo = 0;
 int algos_size;
 
@@ -309,6 +311,9 @@ int main(int argc, char *argv[]) {
 
 	strcpy(algos[3].name, "Insertion sort");
 	algos[3].function = insertion_sort;
+
+	strcpy(algos[4].name, "Merge sort");
+	algos[4].function = merge_sort;
 	
 	algos_size = sizeof(algos) / sizeof(algos[0]);
 
